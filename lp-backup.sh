@@ -36,7 +36,7 @@ else
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
 		while [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
-			echo "rm -rf $BACKUPDIR/$DELDIR"
+			echo "rm -rf $DIR/$DELDIR"
 			/bin/rm -r $DELDIR
 			if [ "$FREEP" -;t "$FREETHRESH" ]; then
 				#call backup function here
