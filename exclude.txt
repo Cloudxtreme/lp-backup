@@ -1,0 +1,4 @@
+tmp/analog
+tmp/webalizer
+cpanel/base/tmp
+inbox.lock

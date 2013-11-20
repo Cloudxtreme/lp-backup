@@ -1,0 +1,46 @@
+#!/bin/bash
+. lp-backup.cfg
+
+
+function DRIVEMOUNT(){
+CHECKMOUNT=$(mount | grep "$DRIVE")
+
+if [ -z "$CHECKMOUNT" ]; then
+	mount $DRIVE $DIR
+ 	CHECKMOUNT=$(mount | grep "$DRIVE")
+ 	if [ -z "$CHECKMOUNT" ]; then
+ 		echo "Could not mount $DRIVE to $DIR."
+ 		exit 1;
+ 		#Add logging here.
+ 	else
+ 		echo "Mounted $DRIVE to $DIR." #MFD
+ 		#Add logging here.
+ 	fi
+ else
+ 	echo "$DRIVE already mounted."
+ fi
+}
+
+function BACKUP() {
+	#Make the backup directory with the timestamp, declare $TS as readonly so we don't lose
+	#the backup target mid-run.
+	declare -r TS=`date +%m-%d-%Y_%R`
+	echo $TS #MFD
+	BACKUPDIR="$DIR/_backup_$TS"
+	/bin/mkdir -p $BACKUPDIR
+	#Loop through the defined targets array before moving on to homedirs.
+	for i in "${TARGET[@]}"; do
+		echo Backing up: $i;
+		/usr/bin/rsync -aH --exclude-from 'exclude.txt' $i $BACKUPDIR/
+	done
+	#Get the cPanel users' homedires and back them up to the destination.
+	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
+		echo "cPanel users detected. Backing up homedirs."
+		for i in `/bin/ls /var/cpanel/users`; do echo rsync -aH \
+		$(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR; done
+	else
+		echo "No cPanel user accounts detected."
+	fi
+}
+
+BACKUP
