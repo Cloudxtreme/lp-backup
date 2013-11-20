@@ -38,7 +38,7 @@ else
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 			echo "rm -rf $DIR/$DELDIR"
 			/bin/rm -r $DIR/$DELDIR
-			if [ "$FREEP" -;t "$FREETHRESH" ]; then
+			if [ "$FREEP" -lt "$FREETHRESH" ]; then
 				#call backup function here
 				BACKUP
 				echo "If statement backup run."
