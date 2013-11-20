@@ -1,13 +1,23 @@
 #!/bin/bash
-set -e
+#set -e
 set -u
 . lp-backup.cfg
 
+function LOGINIT() {
+	#declare -r TS=`date +%m-%d-%Y_%R`
+	if [ ! -f "$LOGDIR" ]; then
+		mkdir -p $LOGDIR
+		touch $LOGDIR/backup-$TS.log
+	else
+		touch $LOGDIR/backup-$TS.log
+	fi
+}
+
 function DRIVEMOUNT(){
 CHECKMOUNT=$(mount | grep "$DRIVE")
-
+echo "$TS (in Drive mount)" #MF
 if [ -z "$CHECKMOUNT" ]; then
-	mount $DRIVE $DIR
+	mount $DRIVE $DIR 2&> /dev/null
  	CHECKMOUNT=$(mount | grep "$DRIVE")
  	if [ -z "$CHECKMOUNT" ]; then
  		echo "Could not mount $DRIVE to $DIR."
@@ -23,8 +33,9 @@ if [ -z "$CHECKMOUNT" ]; then
 }
 
 function SPACECHECK() {
+echo "$TS (in Space check)"
 DELTRIES=0
-FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+#FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 echo "$FREEP"
 if [ "$FREEP" -lt "$FREETHRESH" ]; then
 	echo "There is enough room for a backup run.";
@@ -36,9 +47,9 @@ else
 	#$FREEP has been be reinstatiated multiple times to get the update in the loop
 	#Should look at a way to avoid this as it is cleaner, but it works as inteded for now.
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
-		FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+		#FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 		while [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
-			FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+			#FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 			echo "$FREEP (looped)"
 			echo "Preparing to rm -rf $DIR/$DELDIR"
@@ -71,8 +82,8 @@ fi
 function BACKUP() {
 	#Make the backup directory with the timestamp, declare $TS as readonly so we don't lose
 	#the backup target mid-run.
-	declare -r TS=`date +%m-%d-%Y_%R`
-	echo $TS #MFD
+	#declare -r TS=`date +%m-%d-%Y_%R`
+	echo "$TS (in Backup)" #MFD
 	BACKUPDIR="$DIR/_backup_$TS"
 	/bin/mkdir -p $BACKUPDIR
 	#Loop through the defined targets array before moving on to homedirs.
@@ -93,6 +104,8 @@ function BACKUP() {
 	fi
 	exit 0
 }
+
+LOGINIT
 DRIVEMOUNT
 SPACECHECK
 BACKUP
