@@ -9,13 +9,16 @@ function SPACECHECK(){
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
 		DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 		if [ -z "$DELDIR" ]; then
-			echo "Cannot find valid target for removal or deletion tries exceeded."
+			echo "Cannot find valid target for removal."
 		else
 			echo "Removing: $DIR/$DELDIR"
 			echo "/bin/rm -r $DIR/$DELDIR"
 			let DELTRIES=$DELTRIES+1
 			SPACECHECK
 		fi
+	else
+		echo "Deletion attempts exceed, exiting."
+		exit 1
 	fi
 	echo "Space is adequate, continuing backup."
 }
