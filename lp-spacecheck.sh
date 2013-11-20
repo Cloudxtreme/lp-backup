@@ -17,5 +17,6 @@ function SPACECHECK(){
 			SPACECHECK
 		fi
 	fi
+	echo "Space is adequate, continuing backup."
 }
 SPACECHECK
