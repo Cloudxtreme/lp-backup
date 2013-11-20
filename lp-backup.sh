@@ -36,8 +36,14 @@ else
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
 		while [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
-			echo "rm -rf $DIR/$DELDIR"
-			/bin/rm -r $DIR/$DELDIR
+			echo "Preparing to rm -rf $DIR/$DELDIR"
+			if [ -z "$DELDIR" ]; then
+				echo "Cannot locate old backup to remove; exiting."
+				exit 1
+			else
+				echo "Removing: $DIR/$DELDIR"
+				/bin/rm -r $DIR/$DELDIR
+			fi
 			if [ "$FREEP" -lt "$FREETHRESH" ]; then
 				#call backup function here
 				BACKUP
