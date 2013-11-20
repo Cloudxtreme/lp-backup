@@ -49,7 +49,7 @@ function SPACECHECK(){
 			SPACECHECK
 		fi
 	else
-		if [ $DELTRIES -gt 2 ]; then
+		if [ $DELTRIES -gt 2 ] && [ "$FREEP" -ge "$FREETHRESH" ] ; then
 			echo "Deletion attempts exceed, exiting."
 			exit 1
 		fi
