@@ -1,8 +1,10 @@
 #!/bin/bash
 . lp-backup.cfg
 
+function SPACECHECK() {
 DELTRIES=0
 FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+
 if [ "$FREEP" -gt 90 ]; then
 	echo "There is enough room for a backup run.";
 	#Do backup run function here.
@@ -30,3 +32,5 @@ else
 		done
 	fi
 fi
+}
+SPACECHECK
