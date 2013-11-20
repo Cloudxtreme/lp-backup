@@ -3,6 +3,7 @@
 set -u
 . lp-backup.cfg
 
+
 function LOGINIT() {
 	#declare -r TS=`date +%m-%d-%Y_%R`
 	if [ ! -f "$LOGDIR" ]; then
@@ -22,7 +23,7 @@ if [ -z "$CHECKMOUNT" ]; then
  	if [ -z "$CHECKMOUNT" ]; then
  		echo "Could not mount $DRIVE to $DIR."
  		exit 1;
- 		#Add logging here.
+ 		#Add logging here.a
  	else
  		echo "Mounted $DRIVE to $DIR." #MFD
  		#Add logging here.
@@ -32,51 +33,25 @@ if [ -z "$CHECKMOUNT" ]; then
  fi
 }
 
-function SPACECHECK() {
-echo "$TS (in Space check)"
-DELTRIES=0
-FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
-echo "Starting free space percentage: $FREEP"
-if [ "$FREEP" -lt "$FREETHRESH" ]; then
-	echo "There is enough room for a backup run.";
-	#Do backup run function here.
-else
-	#this where the space clean up logic comes in to play
-	#Do cleanup.
-	#Get oldest backup dir based on $DIR and ctime on the directories and nuke it.
-	#$FREEP has been be reinstatiated multiple times to get the update in the loop
-	#Should look at a way to avoid this as it is cleaner, but it works as inteded for now.
+function SPACECHECK(){
+	echo "$TS (in SPACECHECK()"
+	FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+	echo "Starting free space percentage: $FREEP. Deletion attempts: $DELTRIES"
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
-		FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
-		while [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
-			FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
-			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
-			echo "$FREEP (looped)"
-			echo "Preparing to rm -rf $DIR/$DELDIR"
-			if [ -z "$DELDIR" ]; then
-				echo "Cannot locate old backup to remove; exiting."
-				#exit 1
-			else
-				echo "Removing: $DIR/$DELDIR"
-				/bin/rm -r $DIR/$DELDIR
-			fi
-			if [ "$FREEP" -lt "$FREETHRESH" ]; then
-				#call backup function here
-				BACKUP
-				echo "If statement backup run."
-				#break the while loop since the backup can be started.
-				DELTRIES=3
-			else
-				if [ "$DELTRIES" -ge 2 ]; then
-					echo "Can't free space to run backup."
-					exit 1
-				else
-					let DELTRIES=$DELTRIES+1
-				fi
-			fi
-		done
+		DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
+		if [ -z "$DELDIR" ]; then
+			echo "Cannot find valid target for removal."
+		else
+			echo "Removing: $DIR/$DELDIR"
+			/bin/rm -r $DIR/$DELDIR
+			let DELTRIES=$DELTRIES+1
+			SPACECHECK
+		fi
+	else
+		echo "Deletion attempts exceed, exiting."
+		exit 1
 	fi
-fi
+	echo "Space is adequate, continuing backup."
 }
 
 function BACKUP() {
