@@ -37,7 +37,7 @@ else
 		while [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 			echo "rm -rf $DIR/$DELDIR"
-			/bin/rm -r $DELDIR
+			/bin/rm -r $DIR/$DELDIR
 			if [ "$FREEP" -;t "$FREETHRESH" ]; then
 				#call backup function here
 				BACKUP
