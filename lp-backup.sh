@@ -25,7 +25,7 @@ if [ -z "$CHECKMOUNT" ]; then
 function SPACECHECK() {
 DELTRIES=0
 FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
-
+echo "$FREEP"
 if [ "$FREEP" -lt "$FREETHRESH" ]; then
 	echo "There is enough room for a backup run.";
 	#Do backup run function here.
@@ -36,6 +36,7 @@ else
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
 		while [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
+			echo "$FREEP (looped)"
 			echo "Preparing to rm -rf $DIR/$DELDIR"
 			if [ -z "$DELDIR" ]; then
 				echo "Cannot locate old backup to remove; exiting."
