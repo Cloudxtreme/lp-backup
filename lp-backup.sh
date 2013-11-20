@@ -36,7 +36,7 @@ function SPACECHECK() {
 echo "$TS (in Space check)"
 DELTRIES=0
 FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
-echo "$FREEP"
+echo "Starting free space percentage: $FREEP"
 if [ "$FREEP" -lt "$FREETHRESH" ]; then
 	echo "There is enough room for a backup run.";
 	#Do backup run function here.
