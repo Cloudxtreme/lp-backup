@@ -16,6 +16,6 @@ function SPACECHECK(){
 			let DELTRIES=$DELTRIES+1
 			SPACECHECK
 		fi
-
+	fi
 }
 SPACECHECK
