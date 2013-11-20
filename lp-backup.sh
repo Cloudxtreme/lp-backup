@@ -33,10 +33,11 @@ else
 	#this where the space clean up logic comes in to play
 	#Do cleanup.
 	#Get oldest backup dir based on $DIR and ctime on the directories and nuke it.
-	if [ "$FREEP" -gt "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
-		while [ "$FREEP" -lt "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
+	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
+		while [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 			echo "rm -rf $DELDIR"
+			/bin/rm -r $DELDIR
 			if [ "$FREEP" -;t "$FREETHRESH" ]; then
 				#call backup function here
 				BACKUP
