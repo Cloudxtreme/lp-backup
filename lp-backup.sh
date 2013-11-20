@@ -33,10 +33,12 @@ else
 	#this where the space clean up logic comes in to play
 	#Do cleanup.
 	#Get oldest backup dir based on $DIR and ctime on the directories and nuke it.
+	#$FREEP has been be reinstatiated multiple times to get the update in the loop
+	#Should look at a way to avoid this as it is cleaner, but it works as inteded for now.
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
 		FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 		while [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
-			#FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+			FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 			echo "$FREEP (looped)"
 			echo "Preparing to rm -rf $DIR/$DELDIR"
