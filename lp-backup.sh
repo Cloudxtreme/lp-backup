@@ -35,7 +35,7 @@ if [ -z "$CHECKMOUNT" ]; then
 function SPACECHECK() {
 echo "$TS (in Space check)"
 DELTRIES=0
-#FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 echo "$FREEP"
 if [ "$FREEP" -lt "$FREETHRESH" ]; then
 	echo "There is enough room for a backup run.";
@@ -47,15 +47,15 @@ else
 	#$FREEP has been be reinstatiated multiple times to get the update in the loop
 	#Should look at a way to avoid this as it is cleaner, but it works as inteded for now.
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
-		#FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+		FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 		while [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; do
-			#FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+			FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 			echo "$FREEP (looped)"
 			echo "Preparing to rm -rf $DIR/$DELDIR"
 			if [ -z "$DELDIR" ]; then
 				echo "Cannot locate old backup to remove; exiting."
-				#exit 1
+				exit 1
 			else
 				echo "Removing: $DIR/$DELDIR"
 				/bin/rm -r $DIR/$DELDIR
