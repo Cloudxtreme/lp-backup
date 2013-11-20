@@ -38,8 +38,8 @@ else
 			DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 			echo "Preparing to rm -rf $DIR/$DELDIR"
 			if [ -z "$DELDIR" ]; then
-				echo "Cannot locate old backup to remove; exiting."
-				exit 1
+				#echo "Cannot locate old backup to remove; exiting."
+				#exit 1
 			else
 				echo "Removing: $DIR/$DELDIR"
 				/bin/rm -r $DIR/$DELDIR
