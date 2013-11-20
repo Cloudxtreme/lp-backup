@@ -1,12 +1,12 @@
 #!/bin/bash
 . lp-backup.cfg
 
-DELTRIES="0"
+DELTRIES="1"
 function SPACECHECK(){
 	echo "$TS (in SPACECHECK()"
 	FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 	echo "Starting free space percentage: $FREEP. Deletion attempts: $DELTRIES"
-	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -lt 2 ]; then
+	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -lt 3 ]; then
 		DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 		if [ -z "$DELDIR" ]; then
 			echo "Cannot find valid target for removal."
