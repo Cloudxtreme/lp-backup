@@ -40,7 +40,8 @@ function SPACECHECK(){
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
 		DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 		if [ -z "$DELDIR" ]; then
-			echo "Cannot find valid target for removal."
+			echo "Cannot find valid target for removal, exiting."
+			exit 1
 		else
 			echo "Removing: $DIR/$DELDIR"
 			/bin/rm -r $DIR/$DELDIR
