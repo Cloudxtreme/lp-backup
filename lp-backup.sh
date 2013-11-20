@@ -49,8 +49,10 @@ function SPACECHECK(){
 			SPACECHECK
 		fi
 	else
-		echo "Deletion attempts exceed, exiting."
-		exit 1
+		if [ $DELTRIES -eq 2 ]; then
+			echo "Deletion attempts exceed, exiting."
+			exit 1
+		fi
 	fi
 	echo "Space is adequate, continuing backup."
 }
