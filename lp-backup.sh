@@ -12,16 +12,18 @@ function LOGINIT() {
 	else
 		touch $LOG
 	fi
+	/bin/date >> $LOG
+	echo "Beginning backup run."
+
 }
 
 function DRIVEMOUNT(){
 CHECKMOUNT=$(mount | grep "$DRIVE")
-echo "$TS (in Drive mount)" #MF
 if [ -z "$CHECKMOUNT" ]; then
 	mount $DRIVE $DIR 2&> /dev/null
  	CHECKMOUNT=$(mount | grep "$DRIVE")
  	if [ -z "$CHECKMOUNT" ]; then
- 		echo "Could not mount $DRIVE to $DIR."
+ 		echo "Could not mount $DRIVE to $DIR." >> $LOG
  		exit 1;
  		#Add logging here.a
  	else
@@ -84,7 +86,27 @@ function BACKUP() {
 	exit 0
 }
 
-LOGINIT
-DRIVEMOUNT
-SPACECHECK
-BACKUP
+function UNMOUNT(){
+	umount $DIR >> $LOG
+	CHECKMOUNT=$(mount | grep "$DRIVE")
+	if [ ! -z "$CHECKMOUNT" && "$UMOUNTS" -lt 2 ]; then
+		echo "$DRIVE failed to unmount properly, waiting 60 and trying again."
+		let UMOUNTS=$UMOUNTS+1
+		sleep 60
+		UNMOUNT
+	else
+		if [ ! -z "$CHECKMOUNT" && "$UMOUNTS" -gt 2 ]; then
+			echo "$DRIVE failed to unmount after three attempts; exiting."
+			exit 1
+		fi
+	fi
+	if [ -z "$CHECKMOUNT" ]; then
+		echo "$DRIVE unmounted successfully."
+	fi
+}
+
+#LOGINIT
+#DRIVEMOUNT
+#SPACECHECK
+#BACKUP
+UNMOUNT
