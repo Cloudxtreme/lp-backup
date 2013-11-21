@@ -89,7 +89,7 @@ function BACKUP() {
 		echo "No cPanel user accounts detected. Skipping homedir backup."
 	fi
 
-	exit 0
+	#exit 0
 }
 
 function UNMOUNT(){
