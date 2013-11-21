@@ -113,7 +113,7 @@ echo "$LOGSTAMP Beginning drive mount:"
 DRIVEMOUNT
 echo "$LOGSTAMP Beginning space check:"
 SPACECHECK
-echo "$LOSTAMP Beginning backups:"
+echo "$LOGSTAMP Beginning backups:"
 BACKUP
 echo "$LOGSTAMP Beginning unmount:"
 UNMOUNT
