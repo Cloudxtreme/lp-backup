@@ -2,7 +2,9 @@
 #set -e
 set -u
 . lp-backup.cfg
-
+function LOGSTAMP(){
+	echo "[$(date +%m-%d-%Y\ %T)]"
+}
 
 function LOGINIT() {
 	#declare -r TS=`date +%m-%d-%Y_%R`
@@ -108,14 +110,14 @@ function UNMOUNT(){
 		echo "$LOGSTAMP $DRIVE unmounted successfully."
 	fi
 }
-echo "$LOGSTAMP Beginning backup run."
+echo "$(LOGSTAMP) Beginning backup run."
 echo "$LOGSTAMP Beginning log clean up/initialization:"
 #LOGINIT
 echo "$LOGSTAMP Beginning drive mount:"
-DRIVEMOUNT
+#DRIVEMOUNT
 echo "$LOGSTAMP Beginning space check:"
-SPACECHECK
+#SPACECHECK
 echo "$LOGSTAMP Beginning backups:"
-BACKUP
+#BACKUP
 echo "$LOGSTAMP Beginning unmount:"
-UNMOUNT
+#UNMOUNT
