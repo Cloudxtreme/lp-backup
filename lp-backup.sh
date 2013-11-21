@@ -93,7 +93,7 @@ function UNMOUNT(){
 		echo "$DRIVE failed to unmount properly, waiting 60 and trying again."
 		let UMOUNTS=$UMOUNTS+1
 		echo "Unmount attempts: $UMOUNTS"
-		sleep 5
+		sleep 2
 		UNMOUNT
 	else
 		if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -eq 2 ]; then
@@ -105,10 +105,10 @@ function UNMOUNT(){
 		echo "$DRIVE unmounted successfully."
 	fi
 }
-echo -e "Beginning backup run at `date` \n" >> $LOG
+echo "`date +%m-%d-%Y:%T`: Beginning backup run." >> $LOG
 #LOGINIT
 #DRIVEMOUNT
 #SPACECHECK
 #BACKUP
-echo ""
+echo "`date +%m-%d-%Y:%T`: Beginning unmount:"
 UNMOUNT
