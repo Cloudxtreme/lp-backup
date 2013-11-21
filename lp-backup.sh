@@ -100,6 +100,7 @@ function BACKUP() {
 		#Use the if return for notification, otherwise, dump errors to general log for review.
 		/usr/bin/mysqldump $i > $BACKUPDIR/mysqldumps/$i.sql  > $LOG 2>&1 || { echo \ 
 			"$LOGSTAMP Dumping $i returned error." >> $LOG; }
+	done
 
 	#exit 0
 }
