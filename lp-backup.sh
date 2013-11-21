@@ -77,7 +77,8 @@ function BACKUP() {
 		for i in `/bin/ls /var/cpanel/users`; do 
 			echo "Backing up cPanel user: $i";
 			/usr/bin/rsync -aH $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR; 
-			/usr/local/cpanel/scripts/pkgacct $i $BACKUPDIR/$i --skiphomedir --skipacctdb;
+			/usr/local/cpanel/scripts/pkgacct $i $BACKUPDIR/$i --skiphomedir --skipacctdb; || \
+				{ echo "Failed packaging cPanel user: $i."; exit 1; }
 		done
 	else
 		echo "No cPanel user accounts detected. Skipping homedir backup."
@@ -106,9 +107,13 @@ function UNMOUNT(){
 	fi
 }
 echo "$LOGSTAMP Beginning backup run."
+echo "$LOGSTAMP Beginning log clean up/initialization:"
 #LOGINIT
-#DRIVEMOUNT
-#SPACECHECK
-#BACKUP
+echo "$LOGSTAMP Beginning drive mount:"
+DRIVEMOUNT
+echo "$LOGSTAMP Beginning space check:"
+SPACECHECK
+echo "$LOSTAMP Beginning backups:"
+BACKUP
 echo "$LOGSTAMP Beginning unmount:"
 UNMOUNT
