@@ -111,7 +111,8 @@ function UNMOUNT(){
 	fi
 }
 echo "$(LOGSTAMP) Beginning backup run."
-echo "$LOGSTAMP Beginning log clean up/initialization:"
+sleep 4
+echo "$(LOGSTAMP) Beginning log clean up/initialization:"
 #LOGINIT
 echo "$LOGSTAMP Beginning drive mount:"
 #DRIVEMOUNT
