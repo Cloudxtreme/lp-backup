@@ -23,7 +23,7 @@ function LOGINIT() {
 function DRIVEMOUNT(){
 CHECKMOUNT=$(mount | grep "$DRIVE")
 if [ -z "$CHECKMOUNT" ]; then
-	mount $DRIVE $DIR 2>&1 > $LOG
+	mount $DRIVE $DIR >> $LOG 2>&1
  	CHECKMOUNT=$(mount | grep "$DRIVE")
  	if [ -z "$CHECKMOUNT" ]; then
  		echo "$(LOGSTAMP) Could not mount $DRIVE to $DIR; exiting." >> $LOG
