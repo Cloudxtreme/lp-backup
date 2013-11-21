@@ -105,10 +105,10 @@ function UNMOUNT(){
 		echo "$DRIVE unmounted successfully."
 	fi
 }
-echo "`date +%m-%d-%Y:%T`: Beginning backup run." >> $LOG
+echo "$LOGSTAMP Beginning backup run."
 #LOGINIT
 #DRIVEMOUNT
 #SPACECHECK
 #BACKUP
-echo "`date +%m-%d-%Y:%T`: Beginning unmount:"
+echo "$LOGSTAMP Beginning unmount:"
 UNMOUNT
