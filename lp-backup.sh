@@ -76,7 +76,7 @@ function BACKUP() {
 		echo "cPanel users detected. Backing up homedirs."
 		for i in `/bin/ls /var/cpanel/users`; do
 			VALIDUSER=$(grep $i /etc/passwd | cut -f1 -d:)
-			if [ "$i" == $VALIDUSER ]; then
+			if [ "$i" == "$VALIDUSER" ]; then
 				echo "Backing up cPanel user: $i";
 				/usr/bin/rsync -aH $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR; 
 				/usr/local/cpanel/scripts/pkgacct $i $BACKUPDIR/$i --skiphomedir --skipacctdb || \
