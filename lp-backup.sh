@@ -92,10 +92,11 @@ function UNMOUNT(){
 	if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -lt 2 ]; then
 		echo "$DRIVE failed to unmount properly, waiting 60 and trying again."
 		let UMOUNTS=$UMOUNTS+1
+		echo "Unmount attempts: $UMOUNTS"
 		sleep 60
 		UNMOUNT
 	else
-		if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -gt 2 ]; then
+		if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -eq 2 ]; then
 			echo "$DRIVE failed to unmount after three attempts; exiting."
 			exit 1
 		fi
