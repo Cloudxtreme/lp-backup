@@ -12,19 +12,19 @@ function LOGSTAMP(){
 function LOGINIT() {
 	#declare -r TS=`date +%m-%d-%Y_%R`
 	if [ ! -f "$LOGDIR" ]; then
-		mkdir -p $LOGDIR
-		touch $LOG
+		/bin/mkdir -p $LOGDIR
+		/bin/touch $LOG
 	else
-		touch $LOG
+		/bin/touch $LOG
 	fi
 	#Log cleanup stuff will need to go here. 
 }
 
 function DRIVEMOUNT(){
-CHECKMOUNT=$(mount | grep "$DRIVE")
+CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
 if [ -z "$CHECKMOUNT" ]; then
-	mount $DRIVE $DIR >> $LOG 2>&1
- 	CHECKMOUNT=$(mount | grep "$DRIVE")
+	/bin/mount $DRIVE $DIR >> $LOG 2>&1
+ 	CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
  	if [ -z "$CHECKMOUNT" ]; then
  		echo "$(LOGSTAMP) Could not mount $DRIVE to $DIR; exiting." >> $LOG
  		#Alert.
@@ -40,7 +40,7 @@ if [ -z "$CHECKMOUNT" ]; then
 }
 
 function SPACECHECK(){
-	FREEP=$(df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
+	FREEP=$(/bin/df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 	echo "$(LOGSTAMP) Free space percentage: $FREEP. Thresh is: $FREETHRESH. \
 		Deletion attempts: $DELTRIES" >> $LOG
 	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
@@ -93,6 +93,13 @@ function BACKUP() {
 	else
 		echo "$(LOGSTAMP) No cPanel user accounts detected. Skipping homedir backup." >> $LOG
 	fi
+	#Here comes the SQL dumps.
+	/bin/mkdir -p $BACKUPDIR/mysqldumps
+	echo "$(LOGSTAMP) Beginning MySQL dumps."
+	for i in $(mysql -e 'show databases;' | sed '/Database/d' | grep -v "information_schema"); do
+		#Use the if return for notification, otherwise, dump errors to general log for review.
+		/usr/bin/mysqldump $i > $BACKUPDIR/mysqldumps/$i.sql  > $LOG 2>&1 || { echo \ 
+			"$LOGSTAMP Dumping $i returned error." >> $LOG; }
 
 	#exit 0
 }
