@@ -35,7 +35,7 @@ if [ -z "$CHECKMOUNT" ]; then
  		#Add logging here.
  	fi
  else
- 	echo "$(LOGSTAMP) $DRIVE already mounted."
+ 	echo "$(LOGSTAMP) $DRIVE already mounted." >> $LOG
  fi
 }
 
