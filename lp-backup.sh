@@ -95,7 +95,7 @@ function UNMOUNT(){
 		sleep 60
 		UNMOUNT
 	else
-		if [ ! -z "$CHECKMOUNT" ] && [ "$UNMOUNTS" -gt 2 ]; then
+		if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -gt 2 ]; then
 			echo "$DRIVE failed to unmount after three attempts; exiting."
 			exit 1
 		fi
