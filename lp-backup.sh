@@ -77,8 +77,8 @@ function BACKUP() {
 		for i in `/bin/ls /var/cpanel/users`; do 
 			echo "Backing up cPanel user: $i";
 			/usr/bin/rsync -aH $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR; 
-			/usr/local/cpanel/scripts/pkgacct $i $BACKUPDIR/$i --skiphomedir --skipacctdb; || \
-				{ echo "Failed packaging cPanel user: $i."; exit 1; }
+			/usr/local/cpanel/scripts/pkgacct $i $BACKUPDIR/$i --skiphomedir --skipacctdb || \
+				{ echo "Failed packaging cPanel user: $i."; exit 1; };
 		done
 	else
 		echo "No cPanel user accounts detected. Skipping homedir backup."
