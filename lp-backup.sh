@@ -120,10 +120,10 @@ echo "$(LOGSTAMP) Beginning backup run." >> $LOG
 echo "$(LOGSTAMP) Beginning log clean up/initialization:" >> $LOG
 #LOGINIT
 echo "$(LOGSTAMP) Beginning drive mount:" >> $LOG
-#DRIVEMOUNT
+DRIVEMOUNT
 echo "$(LOGSTAMP) Beginning space check:" >> $LOG
-#SPACECHECK
+SPACECHECK
 echo "$(LOGSTAMP) Beginning backups:" >> $LOG
-#BACKUP
+BACKUP
 echo "$(LOGSTAMP) Beginning unmount:" >> $LOG
-#UNMOUNT
+UNMOUNT
