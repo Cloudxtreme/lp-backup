@@ -8,9 +8,9 @@ function LOGINIT() {
 	#declare -r TS=`date +%m-%d-%Y_%R`
 	if [ ! -f "$LOGDIR" ]; then
 		mkdir -p $LOGDIR
-		touch $LOGDIR/backup-$TS.log
+		touch $LOG
 	else
-		touch $LOGDIR/backup-$TS.log
+		touch $LOG
 	fi
 }
 
@@ -80,6 +80,7 @@ function BACKUP() {
 	else
 		echo "No cPanel user accounts detected. Skipping homedir backup."
 	fi
+
 	exit 0
 }
 
