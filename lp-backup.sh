@@ -89,13 +89,13 @@ function BACKUP() {
 function UNMOUNT(){
 	umount $DIR >> $LOG
 	CHECKMOUNT=$(mount | grep "$DRIVE")
-	if [ ! -z "$CHECKMOUNT" && "$UMOUNTS" -lt 2 ]; then
+	if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -lt 2 ]; then
 		echo "$DRIVE failed to unmount properly, waiting 60 and trying again."
 		let UMOUNTS=$UMOUNTS+1
 		sleep 60
 		UNMOUNT
 	else
-		if [ ! -z "$CHECKMOUNT" && "$UMOUNTS" -gt 2 ]; then
+		if [ ! -z "$CHECKMOUNT" ] && [ "$UNMOUNTS" -gt 2 ]; then
 			echo "$DRIVE failed to unmount after three attempts; exiting."
 			exit 1
 		fi
