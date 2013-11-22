@@ -31,7 +31,7 @@ if [ -z "$CHECKMOUNT" ]; then
  		FAILED
  		#Add logging here.a
  	else
- 		echo "$LOGSTAMP Mounted $DRIVE to $DIR." #MFD
+ 		echo "$(LOGSTAMP) Mounted $DRIVE to $DIR." #MFD
  		#Add logging here.
  	fi
  else
@@ -85,7 +85,7 @@ function BACKUP() {
 				/usr/bin/rsync -aH $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR; 
 				#Failout if pkgacct fails - need to add a call to UNMOUNT here for cleanup purposes.
 				/usr/local/cpanel/scripts/pkgacct $i $BACKUPDIR/$i --skiphomedir --skipacctdb > /dev/null 2>&1 \
-				|| { echo "$LOGSTAMP Failed packaging cPanel user: $i." >> $LOG; FAILED; };
+				|| { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; FAILED; };
 			else
 				echo "$(LOGSTAMP) Cannot retrieve homedir for user $i. Ignoring." >> $LOG
 			fi
@@ -99,7 +99,7 @@ function BACKUP() {
 	for i in $(mysql -e 'show databases;' | sed '/Database/d' | grep -v "information_schema"); do
 		#Use the if return for notification, otherwise, dump errors to general log for review.
 		/usr/bin/mysqldump --ignore-table=mysql.event $i > $BACKUPDIR/mysqldumps/$i.sql  2>> $LOG || { echo \ 
-			"$LOGSTAMP Dumping $i returned error." >> $LOG; }
+			"$(LOGSTAMP) Dumping $i returned error." >> $LOG; }
 	done
 
 	#exit 0
@@ -143,9 +143,8 @@ function NOTIFY(){
 	fi
 }
 
-echo "$(LOGSTAMP) Beginning backup run." >> $LOG
-echo "$(LOGSTAMP) Beginning log clean up/initialization:" >> $LOG
-#LOGINIT
+
+LOGINIT
 echo "$(LOGSTAMP) Beginning drive mount:" >> $LOG
 DRIVEMOUNT
 echo "$(LOGSTAMP) Beginning space check:" >> $LOG
