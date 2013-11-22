@@ -95,7 +95,7 @@ function BACKUP() {
 	fi
 	#Here comes the SQL dumps.
 	/bin/mkdir -p $BACKUPDIR/mysqldumps
-	echo "$(LOGSTAMP) Beginning MySQL dumps."
+	echo "$(LOGSTAMP) Beginning MySQL dumps." >> $LOG
 	for i in $(mysql -e 'show databases;' | sed '/Database/d' | grep -v "information_schema"); do
 		#Use the if return for notification, otherwise, dump errors to general log for review.
 		/usr/bin/mysqldump --ignore-table=mysql.event $i > $BACKUPDIR/mysqldumps/$i.sql  2>> $LOG || { echo \ 
