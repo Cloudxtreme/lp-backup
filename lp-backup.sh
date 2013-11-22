@@ -1,16 +1,20 @@
 #!/bin/bash
-#set -e
+#lp-backup.sh
+
+#Set to error out on unbound variables
+#EVerything should be error checked while being passed to commands
+#but added precaution to stop any errorneous rm/rsyncs.
 set -u
-. lp-backup.cfg
+. lp-backup.cfg #Load configuration file.
 
 function LOGSTAMP(){
-	#General purpose log time stamping to be used with standard echos,
-	#
+	#General purpose log time stamping to be used with standard echos.
 	echo "[$(date +%m-%d-%Y\ %T)]"
 }
 
 function LOGINIT() {
-	#declare -r TS=`date +%m-%d-%Y_%R`
+	#Check if the log directory exists; make it.
+	#Create the logfile for our run.
 	if [ ! -f "$LOGDIR" ]; then
 		/bin/mkdir -p $LOGDIR
 		/bin/touch $LOG
@@ -21,18 +25,16 @@ function LOGINIT() {
 }
 
 function DRIVEMOUNT(){
-CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
-if [ -z "$CHECKMOUNT" ]; then
-	/bin/mount $DRIVE $DIR >> $LOG 2>&1
- 	CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
+	#Check if drive mounted; mount drive; fail out/notify if unable.
+	CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
+	if [ -z "$CHECKMOUNT" ]; then
+		/bin/mount $DRIVE $DIR >> $LOG 2>&1
+ 		CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
  	if [ -z "$CHECKMOUNT" ]; then
  		echo "$(LOGSTAMP) Could not mount $DRIVE to $DIR; exiting." >> $LOG
- 		#Alert.
  		FAILED
- 		#Add logging here.a
  	else
- 		echo "$(LOGSTAMP) Mounted $DRIVE to $DIR." #MFD
- 		#Add logging here.
+ 		echo "$(LOGSTAMP) Mounted $DRIVE to $DIR."
  	fi
  else
  	echo "$(LOGSTAMP) $DRIVE already mounted." >> $LOG
@@ -40,6 +42,8 @@ if [ -z "$CHECKMOUNT" ]; then
 }
 
 function SPACECHECK(){
+	#Get free space percentage; clear room if needed (3 attempts) then fail out/notify
+	#or start backup run.
 	FREEP=$(/bin/df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 	echo "$(LOGSTAMP) Free space percentage: $FREEP. Thresh is: $FREETHRESH. \
 		Deletion attempts: $DELTRIES" >> $LOG
@@ -65,17 +69,19 @@ function SPACECHECK(){
 }
 
 function BACKUP() {
-	#Make the backup directory with the timestamp, declare $TS as readonly so we don't lose
-	#the backup target mid-run.
-	#declare -r TS=`date +%m-%d-%Y_%R`
+	#Do the backup run
+	#Create backup target, loop through TARGET array, rsync to target
+	#Detect/loop through cPanel users, confirm home dir, rsync to target
+	#Do MySQL dumps minus information_schema
+	#Function will failout on cPanel/rsync errors but NOT MySQL errors.
+	
 	BACKUPDIR="$DIR/_backup_$TS"
 	/bin/mkdir -p $BACKUPDIR
-	#Loop through the defined targets array before moving on to homedirs.
+	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
 		echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
 		/usr/bin/rsync -aH --exclude-from 'exclude.txt' $i $BACKUPDIR/
 	done
-	#Get the cPanel users' homedires and back them up to the destination.
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
 		echo "$(LOGSTAMP) cPanel users detected. Backing up homedirs." >> $LOG
 		for i in `/bin/ls /var/cpanel/users`; do
@@ -83,7 +89,6 @@ function BACKUP() {
 			if [ "$i" == "$VALIDUSER" ]; then
 				echo "$(LOGSTAMP) Backing up cPanel user: $i" >> $LOG;
 				/usr/bin/rsync -aH $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR; 
-				#Failout if pkgacct fails - need to add a call to UNMOUNT here for cleanup purposes.
 				/usr/local/cpanel/scripts/pkgacct $i $BACKUPDIR/$i --skiphomedir --skipacctdb > /dev/null 2>&1 \
 				|| { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; FAILED; };
 			else
@@ -93,26 +98,26 @@ function BACKUP() {
 	else
 		echo "$(LOGSTAMP) No cPanel user accounts detected. Skipping homedir backup." >> $LOG
 	fi
-	#Here comes the SQL dumps.
+	#SQL dumps begin here.
 	/bin/mkdir -p $BACKUPDIR/mysqldumps
 	echo "$(LOGSTAMP) Beginning MySQL dumps." >> $LOG
 	for i in $(mysql -e 'show databases;' | sed '/Database/d' | grep -v "information_schema"); do
-		#Use the if return for notification, otherwise, dump errors to general log for review.
 		/usr/bin/mysqldump --ignore-table=mysql.event $i > $BACKUPDIR/mysqldumps/$i.sql  2>> $LOG || { echo \ 
 			"$(LOGSTAMP) Dumping $i returned error." >> $LOG; }
 	done
-
-	#exit 0
 }
 
 function UNMOUNT(){
+	#Unmount the the backup drive.
+	#Called by FAILED to execute cleanup prior to exit.
+	#Will attempt to unmount the backup drive 3 times, then return as a failed backup.
 	umount $DIR >> $LOG 2>&1 >> $LOG
 	CHECKMOUNT=$(mount | grep "$DRIVE")
 	if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -lt 2 ]; then
 		echo "$(LOGSTAMP) $DRIVE failed to unmount properly, waiting 60 and trying again." >> $LOG
 		let UMOUNTS=$UMOUNTS+1
 		echo "$(LOGSTAMP) Unmount attempts: $UMOUNTS" >> $LOG
-		sleep 2
+		sleep 60
 		UNMOUNT
 	else
 		if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -eq 2 ]; then
@@ -128,18 +133,19 @@ function UNMOUNT(){
 function FAILED(){
 	#Function to be called during the cleanup process. Will need to be called at the end of unmounting
 	#with error, and AFTER the unmount function in any irregular exit to prevent looping.
-	echo "$(LOGSTAMP) Backup error detected, sending notification to $EMAIL." >> `cat $LOG`
+	echo "$(LOGSTAMP) Backup error detected, sending notification to $EMAIL." >> $LOG
 	cat $LOG | mail -s "[lp-backup] Backup error on $HOSTNAME" "$EMAIL"
 	exit 1
 
 }
 
 function NOTIFY(){
+	#Will send logout if $NOTIFY=1 - all else will result in no notifications.
 	if [ "$NOTIFY" -eq "1" ]; then
-		echo "$(LOGSTAMP) General notifications enabled, sending report."
+		echo "$(LOGSTAMP) General notifications enabled, sending report." >> $LOG
 		cat $LOG | mail -s "[lp-backup] Backup report for $HOSTNAME" "$EMAIL"
 	else
-		Echo "$(LOGSTAMP) Notifications disabled; backup complete."
+		Echo "$(LOGSTAMP) Notifications disabled; backup complete." >> $LOG
 	fi
 }
 
