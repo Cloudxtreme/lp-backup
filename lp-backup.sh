@@ -137,7 +137,7 @@ function FAILED(){
 function NOTIFY(){
 	if [ "$NOTIFY" -eq "1" ]; then
 		echo "$(LOGSTAMP) General notifications enabled, sending report."
-		mail -s "[lp-backup] Backup report for $HOSTNAME" $EMAIL << $LOG
+		mail -s "[lp-backup] Backup report for $HOSTNAME" $EMAIL << $(cat $LOG)
 	else
 		Echo "$(LOGSTAMP) Notifications disabled; backup complete."
 	fi
