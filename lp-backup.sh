@@ -28,7 +28,7 @@ if [ -z "$CHECKMOUNT" ]; then
  	if [ -z "$CHECKMOUNT" ]; then
  		echo "$(LOGSTAMP) Could not mount $DRIVE to $DIR; exiting." >> $LOG
  		#Alert.
- 		exit 1;
+ 		FAILED
  		#Add logging here.a
  	else
  		echo "$LOGSTAMP Mounted $DRIVE to $DIR." #MFD
@@ -48,7 +48,7 @@ function SPACECHECK(){
 		if [ -z "$DELDIR" ]; then
 			echo "$(LOGSTAMP) Cannot find valid target for removal, exiting." >> $LOG
 			#Need cleanup here.
-			exit 1
+			FAILED
 		else
 			echo "$(LOGSTAMP) Removing: $DIR/$DELDIR" >> $LOG
 			/bin/rm -r $DIR/$DELDIR
@@ -59,7 +59,7 @@ function SPACECHECK(){
 		if [ $DELTRIES -gt 2 ] && [ "$FREEP" -ge "$FREETHRESH" ] ; then
 			echo "$(LOGSTAMP) Deletion attempts exceed, exiting." >> $LOG
 			#Need cleanup here.
-			exit 1
+			FAILED
 		fi
 	fi
 }
@@ -85,7 +85,7 @@ function BACKUP() {
 				/usr/bin/rsync -aH $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR; 
 				#Failout if pkgacct fails - need to add a call to UNMOUNT here for cleanup purposes.
 				/usr/local/cpanel/scripts/pkgacct $i $BACKUPDIR/$i --skiphomedir --skipacctdb > /dev/null 2>&1 \
-				|| { echo "$LOGSTAMP Failed packaging cPanel user: $i." >> $LOG; exit 1; };
+				|| { echo "$LOGSTAMP Failed packaging cPanel user: $i." >> $LOG; FAILED; };
 			else
 				echo "$(LOGSTAMP) Cannot retrieve homedir for user $i. Ignoring." >> $LOG
 			fi
@@ -117,13 +117,32 @@ function UNMOUNT(){
 	else
 		if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -eq 2 ]; then
 			echo "$(LOGSTAMP) $DRIVE failed to unmount after three attempts; exiting." >> $LOG
-			exit 1
+			FAILED
 		fi
 	fi
 	if [ -z "$CHECKMOUNT" ]; then
 		echo "$(LOGSTAMP) $DRIVE unmounted successfully." >> $LOG
 	fi
 }
+
+function FAILED(){
+	#Function to be called during the cleanup process. Will need to be called at the end of unmounting
+	#with error, and AFTER the unmount function in any irregular exit to prevent looping.
+	echo "$(LOGSTAMP) Backup error detected, sending notification to $EMAIL." >> $LOG
+	mail -s "[lp-backup] Backup error on $HOSTNAME" $EMAIL <<< $LOG
+	exit 1
+
+}
+
+function NOTIFY(){
+	if [ "$NOTIFY" -eq "1" ]; then
+		echo "$(LOGSTAMP) General notifications enabled, sending report."
+		mail -s "[lp-backup] Backup report for $HOSTNAME" $EMAIL <<< $LOG
+	else
+		Echo "$(LOGSTAMP) Notifications disabled; backup complete."
+	fi
+}
+
 echo "$(LOGSTAMP) Beginning backup run." >> $LOG
 echo "$(LOGSTAMP) Beginning log clean up/initialization:" >> $LOG
 #LOGINIT
@@ -135,3 +154,4 @@ echo "$(LOGSTAMP) Beginning backups:" >> $LOG
 BACKUP
 echo "$(LOGSTAMP) Beginning unmount:" >> $LOG
 UNMOUNT
+NOTIFY
