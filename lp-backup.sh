@@ -129,7 +129,7 @@ function FAILED(){
 	#Function to be called during the cleanup process. Will need to be called at the end of unmounting
 	#with error, and AFTER the unmount function in any irregular exit to prevent looping.
 	echo "$(LOGSTAMP) Backup error detected, sending notification to $EMAIL." >> $(cat $LOG)
-	mail -s "[lp-backup] Backup error on $HOSTNAME" $EMAIL << $LOG
+	mail -s "[lp-backup] Backup error on $HOSTNAME" "$EMAIL" << $LOG
 	exit 1
 
 }
@@ -137,7 +137,7 @@ function FAILED(){
 function NOTIFY(){
 	if [ "$NOTIFY" -eq "1" ]; then
 		echo "$(LOGSTAMP) General notifications enabled, sending report."
-		mail -s "[lp-backup] Backup report for $HOSTNAME" $EMAIL << $(cat $LOG)
+		mail -s "[lp-backup] Backup report for $HOSTNAME" "$EMAIL" << $(cat $LOG)
 	else
 		Echo "$(LOGSTAMP) Notifications disabled; backup complete."
 	fi
