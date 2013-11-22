@@ -1,3 +1,5 @@
+#exclude.txt
+#rsync exclude list for common unwanted/bloat files.
 tmp/analog
 tmp/webalizer
 cpanel/base/tmp
