@@ -89,7 +89,7 @@ function BACKUP() {
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
 		echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
-		/usr/bin/rsync -aH --exclude-from "exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 \
+		/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 \
 			|| { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; FAILED; };
 	done
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
