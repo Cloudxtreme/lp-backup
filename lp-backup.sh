@@ -6,7 +6,7 @@
 #but added precaution to stop any errorneous rm/rsyncs.
 set -u
 SPATH="/usr/local/src/lp-backup-master"
-. lp-backup.cfg #Load configuration file.
+. $SPATH/lp-backup.cfg #Load configuration file.
 
 function LOGSTAMP(){
 	#General purpose log time stamping to be used with standard echos.
