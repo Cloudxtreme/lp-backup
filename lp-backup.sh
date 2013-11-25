@@ -89,7 +89,8 @@ function BACKUP() {
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
 		echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
-		/usr/bin/rsync -aH --exclude-from 'exclude.txt' $i $BACKUPDIR/$i
+		/usr/bin/rsync -aH --exclude-from "exclude.txt" $i $BACKUPDIR/$i >> $LOG \
+			|| { echo "$(LOGSTAMP) Rsync error detected, exiting." >> $LOG; FAILED} 
 	done
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
 		echo "$(LOGSTAMP) cPanel users detected. Backing up homedirs." >> $LOG
