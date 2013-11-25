@@ -85,12 +85,13 @@ function BACKUP() {
 	
 	BACKUPDIR="$DIR/_backup_$TS"
 	/bin/mkdir -p $BACKUPDIR
-	echo "$(LOGSTAMP) Backing up to $BACKUPDIR."
+	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
 		echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
-		/usr/bin/rsync -aH --exclude-from "exclude.txt" $i $BACKUPDIR/$i >> $LOG \
-			|| { echo "$(LOGSTAMP) Rsync error detected, exiting." >> $LOG; FAILED; };
+		/usr/bin/rsync -aH --exclude-from "exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' \ 
+			"[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 \
+			|| { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; FAILED; };
 	done
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
 		echo "$(LOGSTAMP) cPanel users detected. Backing up homedirs." >> $LOG
