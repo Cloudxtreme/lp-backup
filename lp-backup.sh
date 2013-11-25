@@ -22,10 +22,10 @@ function LOGINIT() {
 		/bin/touch $LOG
 	fi
 	#Log cleanup stuff will need to go here.
-	for i in $(find /usr/local/lp/logs/backup/ -maxdepth 1 -type f -ctime +1 -iname backup-\*); do 
+	for i in $(find $LOGDIR -maxdepth 1 -type f -ctime +7 -iname backup-\*); do 
 		BASE=$(basename $i)
 		echo "$(LOGSTAMP) Removing old logfile: $BASE"; 
-		echo rm -f $i; 
+		/bin/rm -f $i; 
 	done
 }
 
@@ -160,11 +160,11 @@ function NOTIFY(){
 
 LOGINIT
 echo "$(LOGSTAMP) Beginning drive mount:" >> $LOG
-#DRIVEMOUNT
+DRIVEMOUNT
 echo "$(LOGSTAMP) Beginning space check:" >> $LOG
-#SPACECHECK
+SPACECHECK
 echo "$(LOGSTAMP) Beginning backups:" >> $LOG
-#BACKUP
+BACKUP
 echo "$(LOGSTAMP) Beginning unmount:" >> $LOG
-#UNMOUNT
-#NOTIFY
+UNMOUNT
+NOTIFY
