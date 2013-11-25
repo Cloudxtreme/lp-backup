@@ -28,7 +28,7 @@ function DRIVEMOUNT(){
 	#Check if drive mounted; mount drive; fail out/notify if unable.
 	CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
 	if [ -z "$CHECKMOUNT" ]; then
-		/bin/mount $DRIVE $DIR > >(while read -r line; do printf '%s %s\n' "$(date +%m-%d-%Y\ %T)" "$line"; done >> $LOG) 2>&1
+		/bin/mount $DRIVE $DIR > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
  		CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
  	if [ -z "$CHECKMOUNT" ]; then
  		echo "$(LOGSTAMP) Could not mount $DRIVE to $DIR; exiting." >> $LOG
