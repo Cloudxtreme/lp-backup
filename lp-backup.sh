@@ -41,7 +41,7 @@ function DRIVEMOUNT(){
  		echo "$(LOGSTAMP) Could not mount $DRIVE to $DIR; exiting." >> $LOG
  		FAILED
  	else
- 		echo "$(LOGSTAMP) Mounted $DRIVE to $DIR."
+ 		echo "$(LOGSTAMP) Mounted $DRIVE to $DIR." >> $LOG
  	fi
  else
  	echo "$(LOGSTAMP) $DRIVE already mounted." >> $LOG
@@ -87,7 +87,7 @@ function BACKUP() {
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
 		echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
-		/usr/bin/rsync -aH --exclude-from 'exclude.txt' $i $BACKUPDIR/
+		/usr/bin/rsync -aH --exclude-from 'exclude.txt' $i $BACKUPDIR/$i
 	done
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
 		echo "$(LOGSTAMP) cPanel users detected. Backing up homedirs." >> $LOG
@@ -163,7 +163,7 @@ echo "$(LOGSTAMP) Beginning drive mount:" >> $LOG
 DRIVEMOUNT
 echo "$(LOGSTAMP) Beginning space check:" >> $LOG
 SPACECHECK
-echo "$(LOGSTAMP) Beginning backups:" >> $LOG
+echo "$(LOGSTAMP) Beginning backups to $BACKUPDIR:" >> $LOG
 BACKUP
 echo "$(LOGSTAMP) Beginning unmount:" >> $LOG
 UNMOUNT
