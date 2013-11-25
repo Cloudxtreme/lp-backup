@@ -21,11 +21,18 @@ function LOGINIT() {
 	else
 		/bin/touch $LOG
 	fi
-	#Log cleanup stuff will need to go here. 
+	#Log cleanup stuff will need to go here.
+	for i in $(find /usr/local/lp/logs/backup/ -maxdepth 1 -type f -ctime +1 -iname backup-\*); do 
+		BASE=$(basename $i)
+		echo "$(LOGSTAMP) Removing old logfile: $BASE"; 
+		echo rm -f $i; 
+	done
 }
 
 function DRIVEMOUNT(){
 	#Check if drive mounted; mount drive; fail out/notify if unable.
+	#The giant printf block exists to time stamp mounting errors, to make troubleshooting easier, as these
+	#will be the most common cause for erroring out.
 	CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
 	if [ -z "$CHECKMOUNT" ]; then
 		/bin/mount $DRIVE $DIR > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
@@ -111,7 +118,8 @@ function UNMOUNT(){
 	#Unmount the the backup drive.
 	#Called by FAILED to execute cleanup prior to exit.
 	#Will attempt to unmount the backup drive 3 times, then return as a failed backup.
-	umount $DIR >> $LOG 2>&1 >> $LOG
+	#Same printf as for mounting to aid troubleshooting.
+	umount $DIR > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
 	CHECKMOUNT=$(mount | grep "$DRIVE")
 	if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -lt 2 ]; then
 		echo "$(LOGSTAMP) $DRIVE failed to unmount properly, waiting 60 and trying again." >> $LOG
@@ -152,11 +160,11 @@ function NOTIFY(){
 
 LOGINIT
 echo "$(LOGSTAMP) Beginning drive mount:" >> $LOG
-DRIVEMOUNT
+#DRIVEMOUNT
 echo "$(LOGSTAMP) Beginning space check:" >> $LOG
-SPACECHECK
+#SPACECHECK
 echo "$(LOGSTAMP) Beginning backups:" >> $LOG
-BACKUP
+#BACKUP
 echo "$(LOGSTAMP) Beginning unmount:" >> $LOG
-UNMOUNT
-NOTIFY
+#UNMOUNT
+#NOTIFY
