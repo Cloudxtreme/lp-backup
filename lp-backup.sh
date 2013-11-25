@@ -5,6 +5,7 @@
 #EVerything should be error checked while being passed to commands
 #but added precaution to stop any errorneous rm/rsyncs.
 set -u
+SPATH="/usr/local/src/lp-backup-master"
 . lp-backup.cfg #Load configuration file.
 
 function LOGSTAMP(){
@@ -84,6 +85,7 @@ function BACKUP() {
 	
 	BACKUPDIR="$DIR/_backup_$TS"
 	/bin/mkdir -p $BACKUPDIR
+	echo "$(LOGSTAMP) Backing up to $BACKUPDIR."
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
 		echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
@@ -163,7 +165,7 @@ echo "$(LOGSTAMP) Beginning drive mount:" >> $LOG
 DRIVEMOUNT
 echo "$(LOGSTAMP) Beginning space check:" >> $LOG
 SPACECHECK
-echo "$(LOGSTAMP) Beginning backups to $BACKUPDIR:" >> $LOG
+echo "$(LOGSTAMP) Beginning backups:" >> $LOG
 BACKUP
 echo "$(LOGSTAMP) Beginning unmount:" >> $LOG
 UNMOUNT
