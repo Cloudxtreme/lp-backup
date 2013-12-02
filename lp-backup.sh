@@ -5,7 +5,7 @@
 #EVerything should be error checked while being passed to commands
 #but added precaution to stop any errorneous rm/rsyncs.
 set -u
-SPATH="/usr/local/src/lp-backup-master"
+SPATH="/usr/local/lp/apps/backup/lp-backup"
 . $SPATH/lp-backup.cfg #Load configuration file.
 
 function LOGSTAMP(){
@@ -90,8 +90,12 @@ function BACKUP() {
 	for i in "${TARGET[@]}"; do
 		echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
 		/bin/mkdir -p $BACKUPDIR/$i
-		/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 \
-			|| { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; FAILED; };
+		if [ -d "$i" ]; then
+			/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 \
+				|| { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; FAILED; };
+		else
+			echo "Backup target $i does not exist; skipping." >> $LOG
+		fi
 	done
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
 		echo "$(LOGSTAMP) cPanel users detected. Backing up homedirs." >> $LOG
