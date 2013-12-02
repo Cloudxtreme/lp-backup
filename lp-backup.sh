@@ -84,7 +84,7 @@ function BACKUP() {
 	#Function will failout on cPanel/rsync errors but NOT MySQL errors.
 	
 	BACKUPDIR="$DIR/_backup_$TS"
-	/bin/mkdir -p $BACKUPDIR
+	/bin/mkdir -p $BACKUPDIR/home
 	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
@@ -94,7 +94,7 @@ function BACKUP() {
 			/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 \
 				|| { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; FAILED; };
 		else
-			echo "Backup target $i does not exist; skipping." >> $LOG
+			echo "$(LOGSTAMP) Backup target $i does not exist; skipping." >> $LOG
 		fi
 	done
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
@@ -103,7 +103,7 @@ function BACKUP() {
 			VALIDUSER=$(grep $i /etc/passwd | cut -f1 -d:)
 			if [ "$i" == "$VALIDUSER" ]; then
 				echo "$(LOGSTAMP) Backing up cPanel user: $i" >> $LOG;
-				/usr/bin/rsync -aH $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR; 
+				/usr/bin/rsync -aH $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home; 
 				/usr/local/cpanel/scripts/pkgacct $i $BACKUPDIR/$i --skiphomedir --skipacctdb > /dev/null 2>&1 \
 				|| { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; FAILED; };
 			else
@@ -116,7 +116,7 @@ function BACKUP() {
 	#SQL dumps begin here.
 	/bin/mkdir -p $BACKUPDIR/mysqldumps
 	echo "$(LOGSTAMP) Beginning MySQL dumps." >> $LOG
-	for i in $(mysql -e 'show databases;' | sed '/Database/d' | grep -v "information_schema"); do
+	for i in $(mysql -e 'show databases;' | sed '/Database/d' | grep -v "information_schema" | grep -v "performance_schema"); do
 		/usr/bin/mysqldump --ignore-table=mysql.event $i > $BACKUPDIR/mysqldumps/$i.sql  2>> $LOG || { echo \ 
 			"$(LOGSTAMP) Dumping $i returned error." >> $LOG; }
 	done
