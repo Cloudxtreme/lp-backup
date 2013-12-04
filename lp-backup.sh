@@ -104,7 +104,7 @@ function BACKUP() {
 			if [ "$i" == "$VALIDUSER" ]; then
 				echo "$(LOGSTAMP) Backing up cPanel user: $i" >> $LOG;
 				/usr/bin/rsync -aH $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home; 
-				/usr/local/cpanel/scripts/pkgacct -skiphomedir $i $BACKUPDIR/$i ---skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
+				/usr/local/cpanel/scripts/pkgacct --skiphomedir $i $BACKUPDIR/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 			else
 				echo "$(LOGSTAMP) Cannot retrieve homedir for user $i. Ignoring." >> $LOG
 			fi
