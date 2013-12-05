@@ -116,8 +116,7 @@ function BACKUP() {
 	/bin/mkdir -p $BACKUPDIR/mysqldumps
 	echo "$(LOGSTAMP) Beginning MySQL dumps." >> $LOG
 	for i in $(mysql -e 'show databases;' | sed '/Database/d' | grep -v "information_schema" | grep -v "performance_schema"); do
-		/usr/bin/mysqldump --ignore-table=mysql.event $i > $BACKUPDIR/mysqldumps/$i.sql  2>> $LOG || { echo \ 
-			"$(LOGSTAMP) Dumping $i returned error." >> $LOG; }
+		/usr/bin/mysqldump --ignore-table=mysql.event $i > $BACKUPDIR/mysqldumps/$i.sql  2>> $LOG || { echo "$(LOGSTAMP) Dumping $i returned error." >> $LOG; }
 	done
 }
 
