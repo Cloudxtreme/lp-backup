@@ -82,17 +82,21 @@ function BACKUP() {
 	#Detect/loop through cPanel users, confirm home dir, rsync to target
 	#Do MySQL dumps minus information_schema
 	#Function will failout on cPanel/rsync errors but NOT MySQL errors.
-	
+	COMPDIR=$(/bin/ls -1c $DIR | grep _backup | head -1)
 	BACKUPDIR="$DIR/_backup_$TS"
 	/bin/mkdir -p $BACKUPDIR/home
 	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
-		echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
 		/bin/mkdir -p $BACKUPDIR/$i
 		if [ -d "$i" ]; then
-			/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 \
-				|| { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; };
+			if [ ! -z $COMPDIR ]; then
+				echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
+				/usr/bin/rsync -a --delete --link-dest="$COMPDIR" --exclude-from="$PATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; };
+			else
+				echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
+				/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; };
+			fi
 		else
 			echo "$(LOGSTAMP) Backup target $i does not exist; skipping." >> $LOG
 		fi
