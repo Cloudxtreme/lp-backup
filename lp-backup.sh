@@ -92,7 +92,7 @@ function BACKUP() {
 		if [ -d "$i" ]; then
 			if [ ! -z $COMPDIR ]; then
 				echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
-				/usr/bin/rsync -a --delete --link-dest="$COMPDIR" --exclude-from="$PATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; };
+				/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; };
 			else
 				echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
 				/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; };
@@ -106,8 +106,11 @@ function BACKUP() {
 		for i in `/bin/ls /var/cpanel/users`; do
 			VALIDUSER=$(grep $i /etc/passwd | cut -f1 -d:)
 			if [ "$i" == "$VALIDUSER" ]; then
-				echo "$(LOGSTAMP) Backing up cPanel user: $i" >> $LOG;
-				/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; }; 
+				if [ ! -z $COMPDIR ]; then
+					echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
+					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from"$SPATH/exclude.txt" $
+
+					/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; }; 
 				/usr/local/cpanel/scripts/pkgacct --skiphomedir $i $BACKUPDIR/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 			else
 				echo "$(LOGSTAMP) Cannot retrieve homedir for user $i. Ignoring." >> $LOG
