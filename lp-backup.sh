@@ -84,7 +84,7 @@ function BACKUP() {
 	#Function will failout on cPanel/rsync errors but NOT MySQL errors.
 	COMPDIR=$(/bin/ls -1c $DIR | grep _backup | head -1)
 	BACKUPDIR="$DIR/_backup_$TS"
-	/bin/mkdir -p $BACKUPDIR/home
+	/bin/mkdir -p $BACKUPDIR/homedirs
 	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
@@ -108,8 +108,8 @@ function BACKUP() {
 			if [ "$i" == "$VALIDUSER" ]; then
 				if [ ! -z $COMPDIR ]; then
 					echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
-					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/$i
-					if [ "$?" ! -eq "0" ] || [ "$?" ! -eq "24" ]; then
+					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/homedirs/$i
+					if [ "$?" ! -eq "0" -o "$?" ! -eq "24" ]; then
 						echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG
 						UNMOUNT
 						FAILED
