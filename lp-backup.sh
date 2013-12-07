@@ -92,11 +92,20 @@ function BACKUP() {
 		if [ -d "$i" ]; then
 			if [ ! -z $COMPDIR ]; then
 				echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
-				/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; };
+				/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i $BACKUPDIR/homedirs/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+				if [ "$?" -ne "0" ] || [ "$?" -ne "24" ]; then
+					echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG
+					UNMOUNT
+					FAILED
+				fi
 			else
 				echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
-				/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; };
-			fi
+				/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+				if [ "$?" -ne "0" ] || [ "$?" -ne "24" ]; then
+					echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG
+					UNMOUNT
+					FAILED
+				fi
 		else
 			echo "$(LOGSTAMP) Backup target $i does not exist; skipping." >> $LOG
 		fi
@@ -108,17 +117,22 @@ function BACKUP() {
 			if [ "$i" == "$VALIDUSER" ]; then
 				if [ ! -z $COMPDIR ]; then
 					echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
-					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/homedirs/$i
-					if [ "$?" ! -eq "0" -o "$?" ! -eq "24" ]; then
+					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/homedirs/$i  >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					if [ "$?" -ne "0" ] || [ "$?" -ne "24" ]; then
 						echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG
 						UNMOUNT
 						FAILED
 					fi
-						/scripts/pkgacct --skiphomedir $i $BACKUPDIR/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
+						/scripts/pkgacct --skiphomedir $i $BACKUPDIR/homedirs/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 				else
 					echo "$(LOGSTAMP) Backing up cPanel user: $i."
-					/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 || { echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG; UNMOUNT; FAILED; }; 
-					/scripts/pkgacct --skiphomedir $i $BACKUPDIR/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
+					/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/homedirs/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 
+					if [ "$?" -ne "0" ] || [ "$?" -ne "24" ]; then
+						echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG
+						UNMOUNT
+						FAILED
+					fi
+					/scripts/pkgacct --skiphomedir $i $BACKUPDIR/homedirs/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 				fi	
 			else
 				echo "$(LOGSTAMP) Cannot retrieve homedir for user $i. Ignoring." >> $LOG
