@@ -106,6 +106,7 @@ function BACKUP() {
 					UNMOUNT
 					FAILED
 				fi
+			fi
 		else
 			echo "$(LOGSTAMP) Backup target $i does not exist; skipping." >> $LOG
 		fi
