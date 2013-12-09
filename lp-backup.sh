@@ -88,38 +88,42 @@ function BACKUP() {
 	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
-		/bin/mkdir -p $BACKUPDIR/$i
-		if [ -d "$i" ]; then
-			if [ ! -z $COMPDIR ]; then
-				echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
-				/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
-				CHECK="$?"
-				case "$CHECK" in
-					0	)	
-						echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
-					24	)	
-						echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
-					*	)	
-						echo "$(LOGSTAMP) rsync error detected backing up $i. Exiting." >> $LOG
-						UNMOUNT
-						FAILED ;;
-				esac
-			else
-				echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
-				/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
-				case "$CHECK" in
-					0	)	
-						echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
-					24	)	
-						echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
-					*	)	
-						echo "$(LOGSTAMP) rsync error detected backing up $i. Exiting." >> $LOG
-						UNMOUNT
-						FAILED ;;
-				esac
-			fi
+		if [ -L $i ]; then
+			echo "$(LOGSTAMP) Target is a symlink, skipping to prevent unncessary recursion." >> $LOG
 		else
-			echo "$(LOGSTAMP) Backup target $i does not exist; skipping." >> $LOG
+			/bin/mkdir -p $BACKUPDIR/$i
+			if [ -d "$i" ]; then
+				if [ ! -z $COMPDIR ]; then
+					echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
+					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					CHECK="$?"
+					case "$CHECK" in
+						0	)	
+							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
+						24	)	
+							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
+						*	)	
+							echo "$(LOGSTAMP) rsync error detected backing up $i. Exiting." >> $LOG
+							UNMOUNT
+							FAILED ;;
+					esac
+				else
+					echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
+					/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					case "$CHECK" in
+						0	)	
+							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
+						24	)	
+							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
+						*	)	
+							echo "$(LOGSTAMP) rsync error detected backing up $i. Exiting." >> $LOG
+							UNMOUNT
+							FAILED ;;
+					esac
+				fi
+			else
+				echo "$(LOGSTAMP) Backup target $i does not exist; skipping." >> $LOG
+			fi
 		fi
 	done
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
