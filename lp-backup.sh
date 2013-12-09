@@ -95,7 +95,7 @@ function BACKUP() {
 			if [ -d "$i" ]; then
 				if [ ! -z $COMPDIR ]; then
 					echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
-					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i/ $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
 					CHECK="$?"
 					case "$CHECK" in
 						0	)	
