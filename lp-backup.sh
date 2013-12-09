@@ -92,15 +92,21 @@ function BACKUP() {
 		if [ -d "$i" ]; then
 			if [ ! -z $COMPDIR ]; then
 				echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
-				/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i $BACKUPDIR/homedirs/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
-				if [ "$?" -ne "0" ] || [ "$?" -ne "24" ]; then
-					echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG
-					UNMOUNT
-					FAILED
-				fi
+				/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i $BACKUPDIR > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+				CHECK="$?"
+				case "$CHECK" in
+					0	)	
+						echo "Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
+					24	)	
+						echo "Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
+					*	)	
+						echo "$(LOGSTAMP) rsync error detected backing up $i. Exiting." >> $LOG
+						UNMOUNT
+						FAILED ;;
+				esac
 			else
 				echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
-				/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+				/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
 				if [ "$?" -ne "0" ] || [ "$?" -ne "24" ]; then
 					echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG
 					UNMOUNT
@@ -119,6 +125,7 @@ function BACKUP() {
 				if [ ! -z $COMPDIR ]; then
 					echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
 					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/homedirs/$i  >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					CHECK="$?"
 					if [ "$?" -ne "0" ] || [ "$?" -ne "24" ]; then
 						echo "$(LOGSTAMP) rsync error detected, exiting." >> $LOG
 						UNMOUNT
