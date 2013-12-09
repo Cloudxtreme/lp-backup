@@ -89,7 +89,7 @@ function BACKUP() {
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
 		if [ -L $i ]; then
-			echo "$(LOGSTAMP) Target is a symlink, skipping to prevent unncessary recursion." >> $LOG
+			echo "$(LOGSTAMP) Target $i is a symlink, skipping to prevent unncessary recursion." >> $LOG
 		else
 			/bin/mkdir -p $BACKUPDIR/$i
 			if [ -d "$i" ]; then
