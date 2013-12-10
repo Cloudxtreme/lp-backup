@@ -84,7 +84,7 @@ function BACKUP() {
 	#Function will failout on cPanel/rsync errors but NOT MySQL errors.
 	COMPDIR=$(/bin/ls -1c $DIR | grep _backup | head -1)
 	BACKUPDIR="$DIR/_backup_$TS"
-	/bin/mkdir -p $BACKUPDIR/homedirs
+	/bin/mkdir -p $BACKUPDIR/home
 	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG
 	#rsyncs begin here.
 	for i in "${TARGET[@]}"; do
@@ -95,7 +95,7 @@ function BACKUP() {
 			if [ -d "$i" ]; then
 				if [ ! -z $COMPDIR ]; then
 					echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
-					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $i/ $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR/$i" --exclude-from="$SPATH/exclude.txt" $i/ $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
 					CHECK="$?"
 					case "$CHECK" in
 						0	)	
@@ -133,8 +133,8 @@ function BACKUP() {
 			if [ "$i" == "$VALIDUSER" ]; then
 				if [ ! -z $COMPDIR ]; then
 					echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
-					mkdir -p $BACKUPDIR/homedirs/$i
-					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR" --exclude-from="$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/homedirs > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					mkdir -p $BACKUPDIR/home/$i
+					/usr/bin/rsync -a --delete --link-dest="$DIR/$COMPDIR/home/$i" --exclude-from="$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
 					CHECK="$?"
 					case "$CHECK" in
 						0	)	
@@ -146,10 +146,10 @@ function BACKUP() {
 							UNMOUNT
 							FAILED ;;
 					esac
-					/scripts/pkgacct --skiphomedir $i $BACKUPDIR/homedirs/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
+					/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 				else
 					echo "$(LOGSTAMP) Backing up cPanel user: $i."
-					/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/homedirs/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 
+					/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 
 					case "$CHECK" in
 						0	)	
 							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
@@ -160,7 +160,7 @@ function BACKUP() {
 							UNMOUNT
 							FAILED ;;
 					esac
-					/scripts/pkgacct --skiphomedir $i $BACKUPDIR/homedirs/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
+					/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 				fi	
 			else
 				echo "$(LOGSTAMP) Cannot retrieve homedir for user $i. Ignoring." >> $LOG
