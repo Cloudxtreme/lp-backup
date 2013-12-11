@@ -110,6 +110,7 @@ function BACKUP() {
 				else
 					echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
 					/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					CHECK="$?"
 					case "$CHECK" in
 						0	)	
 							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
