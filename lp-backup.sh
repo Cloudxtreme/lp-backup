@@ -109,7 +109,7 @@ function BACKUP() {
 					esac
 				else
 					echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
-					/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $i/ $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					/usr/bin/rsync -a --exclude-from "$SPATH/exclude.txt" $i/ $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
 					CHECK="$?"
 					case "$CHECK" in
 						0	)	
@@ -150,7 +150,7 @@ function BACKUP() {
 					/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 				else
 					echo "$(LOGSTAMP) Backing up cPanel user: $i." >> $LOG
-					/usr/bin/rsync -aH --exclude-from "$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home/$i > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 
+					/usr/bin/rsync -a --exclude-from "$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 
 					CHECK="$?"
 					case "$CHECK" in
 						0	)	
