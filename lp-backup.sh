@@ -218,6 +218,7 @@ function SUMMARY(){
 	echo '<percentFree></percentFree>' >> $SUMMARY
 	for i in $(ls $DIR | grep _backup); do echo \<backup date=\"$(echo $i | cut -f3 -d_ | sed 's/-/\//g')\" time=\"$(echo $i | cut -f4 -d_)\" \/\> >> $SUMMARY;  done
 	echo '</backupSummary>' >> $SUMMARY
+	echo "Created summary file at $SUMMARY." >> $LOG
 }
 
 
@@ -248,6 +249,8 @@ echo "$(LOGSTAMP) Beginning space check:" >> $LOG
 SPACECHECK
 echo "$(LOGSTAMP) Beginning backups:" >> $LOG
 BACKUP
+echo "$(LOGSTAMP) Creating backup summary file:" >> $LOG
+SUMMARY
 echo "$(LOGSTAMP) Beginning unmount:" >> $LOG
 UNMOUNT
 NOTIFY
