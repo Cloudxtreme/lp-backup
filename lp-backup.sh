@@ -205,23 +205,23 @@ function UNMOUNT(){
 
 function SUMMARY(){
 	#While drive is still mounted, generate list of XML entries for the backup summary that Mr. Radar uses
-	echo '<?xml version="1.0" encoding="UTF-8"?>' > $SUMMARY
-	echo ' ' >> $SUMMARY
-	echo '<backupSummary>' >> $SUMMARY
-	echo '<backupDirectory></backupDirectory>' >> $SUMMARY
-	echo '<backupDevice></backupDevice>' >> $SUMMARY
-	echo '<diskUsageLimit></diskUsageLimit>' >> $SUMMARY
-	echo '<diskUsageLimitType></diskUsageLimitType>' >> $SUMMARY
-	echo '<allowedVariance></allowedVariance>' >> $SUMMARY
-	echo '<diskSize></diskSize>' >> $SUMMARY
-	echo '<gigsFree></gigsFree>' >> $SUMMARY
-	echo '<percentFree></percentFree>' >> $SUMMARY
+	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > $SUMMARY
+	echo " "  >> $SUMMARY
+	echo "<backupSummary>" >> $SUMMARY
+	echo "<backupDirectory>$DIR</backupDirectory>" >> $SUMMARY
+	echo "<backupDevice>$DRIVE</backupDevice>" >> $SUMMARY
+	echo "<diskUsageLimit>20</diskUsageLimit>" >> $SUMMARY
+	echo "<diskUsageLimitType>percentFree</diskUsageLimitType>" >> $SUMMARY
+	echo "<allowedVariance>10</allowedVariance>" >> $SUMMARY
+	echo "<diskSize>$(df -h /backup/ | tail -1 | awk '{ print $2 }' | sed 's/[A-Z]//g')</diskSize>" >> $SUMMARY
+	echo "<gigsFree>$(df -h /backup/ | tail -1 | awk '{ print $4 }' | sed 's/[A-Z]//g')</gigsFree>" >> $SUMMARY
+	echo "<percentFree>$Thresh</percentFree>" >> $SUMMARY
 	for i in $(ls $DIR | grep _backup); do echo \<backup date=\"$(echo $i | cut -f3 -d_ | sed 's/-/\//g')\" time=\"$(echo $i | cut -f4 -d_)\" \/\> >> $SUMMARY;  done
 	echo '</backupSummary>' >> $SUMMARY
 	#Validate times for old style backups - this will set the hours to 00: always, rather than find the correct time.
 	#I'm aware this is incredibly dirty, but those backups will be rotating out anyways.
-	sed -i 's/=\"[0-9]:/=\"00:/g' $SUMMARY
-	sed -i 's/:[0-9]\"/:00\"/g' $SUMMARY
+	#sed -i 's/=\"[0-9]:/=\"00:/g' $SUMMARY
+	#sed -i 's/:[0-9]\"/:00\"/g' $SUMMARY
 	echo "$(LOGSTAMP) Created summary file at $SUMMARY." >> $LOG
 }
 
