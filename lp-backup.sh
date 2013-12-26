@@ -221,6 +221,7 @@ function SUMMARY(){
 	#Validate times for old style backups - this will set the hours to 00: always, rather than find the correct time.
 	#I'm aware this is incredibly dirty, but those backups will be rotating out anyways.
 	sed -i 's/=\"[0-9]:/=\"00:/g' $SUMMARY
+	sed -i 's/:[0-9]\"/:00\"/g' $SUMMARY
 	echo "$(LOGSTAMP) Created summary file at $SUMMARY." >> $LOG
 }
 
