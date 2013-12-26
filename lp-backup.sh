@@ -215,7 +215,7 @@ function SUMMARY(){
 	echo "<allowedVariance>10</allowedVariance>" >> $SUMMARY
 	echo "<diskSize>$(df -h /backup/ | tail -1 | awk '{ print $2 }' | sed 's/[A-Z]//g')</diskSize>" >> $SUMMARY
 	echo "<gigsFree>$(df -h /backup/ | tail -1 | awk '{ print $4 }' | sed 's/[A-Z]//g')</gigsFree>" >> $SUMMARY
-	echo "<percentFree>$Thresh</percentFree>" >> $SUMMARY
+	echo "<percentFree>$THRESH</percentFree>" >> $SUMMARY
 	for i in $(ls $DIR | grep _backup); do echo \<backup date=\"$(echo $i | cut -f3 -d_ | sed 's/-/\//g')\" time=\"$(echo $i | cut -f4 -d_)\" \/\> >> $SUMMARY;  done
 	echo '</backupSummary>' >> $SUMMARY
 	#Validate times for old style backups - this will set the hours to 00: always, rather than find the correct time.
