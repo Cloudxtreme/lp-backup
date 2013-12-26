@@ -203,6 +203,24 @@ function UNMOUNT(){
 	fi
 }
 
+function SUMMARY(){
+	#While drive is still mounted, generate list of XML entries for the backup summary that Mr. Radar uses
+	echo '<?xml version="1.0" encoding="UTF-8"?>' > $SUMMARY
+	echo ' ' >> $SUMMARY
+	echo '<backupSummary>' >> $SUMMARY
+	echo '<backupDirectory></backupDirectory>' >> $SUMMARY
+	echo '<backupDevice></backupDevice>' >> $SUMMARY
+	echo '<diskUsageLimit></diskUsageLimit>' >> $SUMMARY
+	echo '<diskUsageLimitType></diskUsageLimitType>' >> $SUMMARY
+	echo '<allowedVariance></allowedVariance>' >> $SUMMARY
+	echo '<diskSize></diskSize>' >> $SUMMARY
+	echo '<gigsFree></gigsFree>' >> $SUMMARY
+	echo '<percentFree></percentFree>' >> $SUMMARY
+	for i in $(ls $DIR | grep _backup); do echo \<backup date=\"$(echo $i | cut -f3 -d_ | sed 's/-/\//g')\" time=\"$(echo $i | cut -f4 -d_)\" \/\> >> $SUMMARY;  done
+	echo '</backupSummary>' >> $SUMMARY
+}
+
+
 function FAILED(){
 	#Function to be called during the cleanup process. Will need to be called at the end of unmounting
 	#with error, and AFTER the unmount function in any irregular exit to prevent looping.
