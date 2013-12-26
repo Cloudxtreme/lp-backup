@@ -210,12 +210,12 @@ function SUMMARY(){
 	echo "<backupSummary>" >> $SUMMARY
 	echo "<backupDirectory>$DIR</backupDirectory>" >> $SUMMARY
 	echo "<backupDevice>$DRIVE</backupDevice>" >> $SUMMARY
-	echo "<diskUsageLimit>20</diskUsageLimit>" >> $SUMMARY
+	echo "<diskUsageLimit>$(echo 100 - $FREETHRESH | bc)</diskUsageLimit>" >> $SUMMARY
 	echo "<diskUsageLimitType>percentFree</diskUsageLimitType>" >> $SUMMARY
 	echo "<allowedVariance>10</allowedVariance>" >> $SUMMARY
 	echo "<diskSize>$(df -h /backup/ | tail -1 | awk '{ print $2 }' | sed 's/[A-Z]//g')</diskSize>" >> $SUMMARY
 	echo "<gigsFree>$(df -h /backup/ | tail -1 | awk '{ print $4 }' | sed 's/[A-Z]//g')</gigsFree>" >> $SUMMARY
-	echo "<percentFree>$THRESH</percentFree>" >> $SUMMARY
+	echo "<percentFree>$(echo 100 - $(df -h /backup/ | tail -1 | awk '{ print $5 }'| sed 's/%//g') | bc)</percentFree>" >> $SUMMARY
 	for i in $(ls $DIR | grep _backup); do echo \<backup date=\"$(echo $i | cut -f3 -d_ | sed 's/-/\//g')\" time=\"$(echo $i | cut -f4 -d_)\" \/\> >> $SUMMARY;  done
 	echo '</backupSummary>' >> $SUMMARY
 	#Validate times for old style backups - this will set the hours to 00: always, rather than find the correct time.
