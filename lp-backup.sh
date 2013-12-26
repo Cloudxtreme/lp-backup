@@ -130,7 +130,7 @@ function BACKUP() {
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
 		echo "$(LOGSTAMP) cPanel users detected. Backing up homedirs." >> $LOG
 		for i in `/bin/ls /var/cpanel/users`; do
-			VALIDUSER=$(grep $i /etc/passwd | cut -f1 -d:)
+			VALIDUSER=$(cut -f1 -d: /etc/passwd | /bin/grep -x $i)
 			if [ "$i" == "$VALIDUSER" ]; then
 				if [ ! -z $COMPDIR ]; then
 					echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
