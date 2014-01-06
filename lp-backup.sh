@@ -241,7 +241,7 @@ function NOTIFY(){
 		echo "$(LOGSTAMP) General notifications enabled, sending report." >> $LOG
 		cat $LOG | mail -s "[lp-backup] Backup report for $HOSTNAME" "$EMAIL"
 	else
-		Echo "$(LOGSTAMP) Notifications disabled; backup complete." >> $LOG
+		echo "$(LOGSTAMP) Notifications disabled; backup complete." >> $LOG
 	fi
 }
 
