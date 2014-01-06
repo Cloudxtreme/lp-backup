@@ -55,7 +55,7 @@ function SPACECHECK(){
 	FREEP=$(/bin/df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 	echo "$(LOGSTAMP) Free space percentage: $FREEP. Thresh is: $FREETHRESH. \
 		Deletion attempts: $DELTRIES" >> $LOG
-	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 2 ]; then
+	if [ "$FREEP" -ge "$FREETHRESH" ] && [ "$DELTRIES" -le 7 ]; then
 		DELDIR=$(/bin/ls -1c $DIR | grep _backup | tail -1)
 		if [ -z "$DELDIR" ]; then
 			echo "$(LOGSTAMP) Cannot find valid target for removal, exiting." >> $LOG
@@ -68,7 +68,7 @@ function SPACECHECK(){
 			SPACECHECK
 		fi
 	else
-		if [ $DELTRIES -gt 2 ] && [ "$FREEP" -ge "$FREETHRESH" ] ; then
+		if [ $DELTRIES -gt 7 ] && [ "$FREEP" -ge "$FREETHRESH" ] ; then
 			echo "$(LOGSTAMP) Deletion attempts exceed, exiting." >> $LOG
 			UNMOUNT
 			FAILED
