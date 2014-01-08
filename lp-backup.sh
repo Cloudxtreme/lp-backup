@@ -36,7 +36,7 @@ function DRIVEMOUNT(){
 	#will be the most common cause for erroring out.
 	CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
 	if [ -z "$CHECKMOUNT" ]; then
-		/bin/mount $DRIVE $DIR > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+		/bin/mount $DRIVE $DIR >> $LOG 2>&1
  		CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
  	if [ -z "$CHECKMOUNT" ]; then
  		echo "$(LOGSTAMP) Could not mount $DRIVE to $DIR; exiting." >> $LOG
@@ -95,7 +95,7 @@ function BACKUP() {
 			if [ -d "$i" ]; then
 				if [ ! -z $COMPDIR ]; then
 					echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
-					/usr/bin/rsync -a --delete --exclude-from="$SPATH/exclude.txt" --link-dest="$DIR/$COMPDIR/$i" $i/ $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					/usr/bin/rsync -a --delete --exclude-from="$SPATH/exclude.txt" --link-dest="$DIR/$COMPDIR/$i" $i/ $BACKUPDIR/$i/ >> $LOG 2>&1
 					CHECK="$?"
 					case "$CHECK" in
 						0	)	
@@ -109,7 +109,7 @@ function BACKUP() {
 					esac
 				else
 					echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
-					/usr/bin/rsync -a --exclude-from "$SPATH/exclude.txt" $i/ $BACKUPDIR/$i/ > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+					/usr/bin/rsync -a --exclude-from "$SPATH/exclude.txt" $i/ $BACKUPDIR/$i/ >> $LOG 2>&1
 					CHECK="$?"
 					case "$CHECK" in
 						0	)	
@@ -137,11 +137,13 @@ function BACKUP() {
 					if [ -d $USERDIR ]; then
 						echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
 						mkdir -p $BACKUPDIR/home/$i
-						/usr/bin/rsync -a --delete --exclude-from="$SPATH/exclude.txt" --link-dest="$DIR/$COMPDIR/home" $USERDIR $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+						/usr/bin/rsync -a --delete --exclude-from="$SPATH/exclude.txt" --link-dest="$DIR/$COMPDIR/home" $USERDIR $BACKUPDIR/home >> $LOG 2>&1
 						CHECK="$?"
 						case "$CHECK" in
 							0	)	
 								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
+							23	)
+								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 23, may be incomplete data)." >> $LOG ;;
 							24	)	
 								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
 							*	)	
@@ -157,11 +159,13 @@ function BACKUP() {
 					if [ ! -z $COMPDIR ]; then
 						echo "$(LOGSTAMP) Backing up cPanel user: $i." >> $LOG
 						mkdir -p $BACKUPDIR/home/$i
-						/usr/bin/rsync -a --exclude-from "$SPATH/exclude.txt" $USERDIR $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 
+						/usr/bin/rsync -a --exclude-from "$SPATH/exclude.txt" $USERDIR $BACKUPDIR/home >> $LOG 2>&1 
 						CHECK="$?"
 						case "$CHECK" in
 							0	)	
 								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
+							23	)
+								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 23, may be incomplete data)." >> $LOG ;;
 							24	)	
 								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
 							*	)	
@@ -194,7 +198,7 @@ function UNMOUNT(){
 	#Called by FAILED to execute cleanup prior to exit.
 	#Will attempt to unmount the backup drive 3 times, then return as a failed backup.
 	#Same printf as for mounting to aid troubleshooting.
-	umount $DIR > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+	umount $DIR >> $LOG 2>&1
 	CHECKMOUNT=$(mount | grep "$DRIVE")
 	if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -lt 2 ]; then
 		echo "$(LOGSTAMP) $DRIVE failed to unmount properly, waiting 60 and trying again." >> $LOG
