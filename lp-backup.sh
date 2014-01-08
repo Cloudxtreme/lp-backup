@@ -131,38 +131,48 @@ function BACKUP() {
 		echo "$(LOGSTAMP) cPanel users detected. Backing up homedirs." >> $LOG
 		for i in `/bin/ls /var/cpanel/users`; do
 			VALIDUSER=$(cut -f1 -d: /etc/passwd | /bin/grep -x $i)
+			USERDIR=$(grep $i /etc/passwd | cut -f6 -d:)
 			if [ "$i" == "$VALIDUSER" ]; then
 				if [ ! -z $COMPDIR ]; then
-					echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
-					mkdir -p $BACKUPDIR/home/$i
-					/usr/bin/rsync -a --delete --exclude-from="$SPATH/exclude.txt" --link-dest="$DIR/$COMPDIR/home" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
-					CHECK="$?"
-					case "$CHECK" in
-						0	)	
-							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
-						24	)	
-							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
-						*	)	
-							echo "$(LOGSTAMP) rsync error detected backing up $i. Exiting. (exited $CHECK)" >> $LOG
-							UNMOUNT
-							FAILED ;;
-					esac
-					/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
+					if [ -d $USERDIR ]; then
+						echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
+						mkdir -p $BACKUPDIR/home/$i
+						/usr/bin/rsync -a --delete --exclude-from="$SPATH/exclude.txt" --link-dest="$DIR/$COMPDIR/home" $USERDIR $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1
+						CHECK="$?"
+						case "$CHECK" in
+							0	)	
+								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
+							24	)	
+								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
+							*	)	
+								echo "$(LOGSTAMP) rsync error detected backing up $i. Exiting. (exited $CHECK)" >> $LOG
+								UNMOUNT
+								FAILED ;;
+						esac
+						/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
+					else
+						echo "$(LOGSTAMP) Home directory for user $i not found; skipping."
+					fi
 				else
-					echo "$(LOGSTAMP) Backing up cPanel user: $i." >> $LOG
-					/usr/bin/rsync -a --exclude-from "$SPATH/exclude.txt" $(grep $i /etc/passwd | cut -f6 -d:) $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 
-					CHECK="$?"
-					case "$CHECK" in
-						0	)	
-							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
-						24	)	
-							echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
-						*	)	
-							echo "$(LOGSTAMP) rsync error detected backing up $i. Exiting. (exited $CHECK)" >> $LOG
-							UNMOUNT
-							FAILED ;;
-					esac
-					/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
+					if [ ! -z $COMPDIR ]; then
+						echo "$(LOGSTAMP) Backing up cPanel user: $i." >> $LOG
+						mkdir -p $BACKUPDIR/home/$i
+						/usr/bin/rsync -a --exclude-from "$SPATH/exclude.txt" $USERDIR $BACKUPDIR/home > >(while read -r line; do printf '%s %s\n' "[$(date +%m-%d-%Y\ %T)]" "$line"; done >> $LOG) 2>&1 
+						CHECK="$?"
+						case "$CHECK" in
+							0	)	
+								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 0)." >> $LOG ;;
+							24	)	
+								echo "$(LOGSTAMP) Backed up $i to $BACKUPDIR (exited 24)." >> $LOG ;;
+							*	)	
+								echo "$(LOGSTAMP) rsync error detected backing up $i. Exiting. (exited $CHECK)" >> $LOG
+								UNMOUNT
+								FAILED ;;
+						esac
+						/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
+					else
+						echo "$(LOGSTAMP) Home directory for user $i not found; skipping."
+					fi
 				fi	
 			else
 				echo "$(LOGSTAMP) Cannot retrieve homedir for user $i. Ignoring." >> $LOG
@@ -210,7 +220,7 @@ function SUMMARY(){
 	echo "<backupSummary>" >> $SUMMARY
 	echo "<backupDirectory>$DIR</backupDirectory>" >> $SUMMARY
 	echo "<backupDevice>$DRIVE</backupDevice>" >> $SUMMARY
-	echo "<diskUsageLimit>$(echo 100 - $FREETHRESH | bc)</diskUsageLimit>" >> $SUMMARY
+	echo "<diskUsageLimit>$(echo 101 - $FREETHRESH | bc)</diskUsageLimit>" >> $SUMMARY
 	echo "<diskUsageLimitType>percentFree</diskUsageLimitType>" >> $SUMMARY
 	echo "<allowedVariance>10</allowedVariance>" >> $SUMMARY
 	echo "<diskSize>$(df -h /backup/ | tail -1 | awk '{ print $2 }' | sed 's/[A-Z]//g')</diskSize>" >> $SUMMARY
