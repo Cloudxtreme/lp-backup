@@ -153,7 +153,7 @@ function BACKUP() {
 						esac
 						/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 					else
-						echo "$(LOGSTAMP) Home directory for user $i not found; skipping."
+						echo "$(LOGSTAMP) Home directory for user $i not found; skipping." >> $LOG
 					fi
 				else
 					if [ ! -z $COMPDIR ]; then
@@ -175,7 +175,7 @@ function BACKUP() {
 						esac
 						/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 					else
-						echo "$(LOGSTAMP) Home directory for user $i not found; skipping."
+						echo "$(LOGSTAMP) Home directory for user $i not found; skipping." >> $LOG
 					fi
 				fi	
 			else
