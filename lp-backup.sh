@@ -134,7 +134,7 @@ function BACKUP() {
 			USERDIR=$(grep $i /etc/passwd | cut -f6 -d:)
 			if [ "$i" == "$VALIDUSER" ]; then
 				if [ ! -z $COMPDIR ]; then
-					if [ -d $USERDIR ]; then
+					if [ -d "$USERDIR" ]; then
 						echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
 						mkdir -p $BACKUPDIR/home/$i
 						/usr/bin/rsync -a --delete --exclude-from="$SPATH/exclude.txt" --link-dest="$DIR/$COMPDIR/home" $USERDIR $BACKUPDIR/home >> $LOG 2>&1
