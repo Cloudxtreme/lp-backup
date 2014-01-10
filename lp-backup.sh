@@ -224,7 +224,7 @@ function SUMMARY(){
 	echo "<backupSummary>" >> $SUMMARY
 	echo "<backupDirectory>$DIR</backupDirectory>" >> $SUMMARY
 	echo "<backupDevice>$DRIVE</backupDevice>" >> $SUMMARY
-	echo "<diskUsageLimit>$(echo 101 - $FREETHRESH | bc)</diskUsageLimit>" >> $SUMMARY
+	echo "<diskUsageLimit>$(echo 99 - $FREETHRESH | bc)</diskUsageLimit>" >> $SUMMARY
 	echo "<diskUsageLimitType>percentFree</diskUsageLimitType>" >> $SUMMARY
 	echo "<allowedVariance>10</allowedVariance>" >> $SUMMARY
 	echo "<diskSize>$(df -h /backup/ | tail -1 | awk '{ print $2 }' | sed 's/[A-Z]//g')</diskSize>" >> $SUMMARY
