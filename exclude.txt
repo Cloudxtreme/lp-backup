@@ -1,6 +1,8 @@
 #exclude.txt
-#rsync exclude list for common unwanted/bloat files.
+#lp-backup.sh rsync exclude file
 tmp/analog
 tmp/webalizer
 cpanel/base/tmp
 inbox.lock
+cache
+error_log

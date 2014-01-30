@@ -22,7 +22,7 @@ function LOGINIT() {
 	else
 		/bin/touch $LOG
 	fi
-	#Log cleanup stuff will need to go here.
+	#Clean out the old backup logs to prevent build up - shouldn't need more than 7 days worth.
 	for i in $(find $LOGDIR -maxdepth 1 -type f -ctime +7 -iname backup-\*); do 
 		BASE=$(basename $i)
 		echo "$(LOGSTAMP) Removing old logfile: $BASE" >> $LOG; 
@@ -32,8 +32,7 @@ function LOGINIT() {
 
 function DRIVEMOUNT(){
 	#Check if drive mounted; mount drive; fail out/notify if unable.
-	#The giant printf block exists to time stamp mounting errors, to make troubleshooting easier, as these
-	#will be the most common cause for erroring out.
+	#This will fail on the first attempt if the drive can't mount but isn't mounted already.
 	CHECKMOUNT=$(/bin/mount | grep "$DRIVE")
 	if [ -z "$CHECKMOUNT" ]; then
 		/bin/mount $DRIVE $DIR >> $LOG 2>&1
@@ -50,7 +49,7 @@ function DRIVEMOUNT(){
 }
 
 function SPACECHECK(){
-	#Get free space percentage; clear room if needed (3 attempts) then fail out/notify
+	#Get free space percentage; clear room if needed (7 attempts) then fail out/notify
 	#or start backup run.
 	FREEP=$(/bin/df -h $DRIVE | awk '{ print $5 }' | sed 's/%//' | tail -1)
 	echo "$(LOGSTAMP) Free space percentage: $FREEP. Thresh is: $FREETHRESH. \
@@ -85,15 +84,18 @@ function BACKUP() {
 	COMPDIR=$(/bin/ls -1c $DIR | grep _backup | head -1)
 	BACKUPDIR="$DIR/_backup_$TS"
 	/bin/mkdir -p $BACKUPDIR/home
-	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG
-	#rsyncs begin here.
+	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG.
+	#Begin looping the target array
 	for i in "${TARGET[@]}"; do
+		#Symlink check - don't need to recurse through these.
 		if [ -L $i ]; then
 			echo "$(LOGSTAMP) Target $i is a symlink, skipping to prevent unncessary recursion." >> $LOG
 		else
-			/bin/mkdir -p $BACKUPDIR/$i
 			if [ -d "$i" ]; then
+				#Create backup target now, then check for $COMPDIR and hardlink as necessary.
+				/bin/mkdir -p $BACKUPDIR/$i
 				if [ ! -z $COMPDIR ]; then
+					#Populate the backup target using hardlinks from $COMPDIR
 					echo "$(LOGSTAMP) Backing up: $i using hardlinks from $COMPDIR." >> $LOG;
 					/usr/bin/rsync -a --delete --exclude-from="$SPATH/exclude.txt" --link-dest="$DIR/$COMPDIR/$i" $i/ $BACKUPDIR/$i/ >> $LOG 2>&1
 					CHECK="$?"
@@ -108,6 +110,7 @@ function BACKUP() {
 							FAILED ;;
 					esac
 				else
+					#Populate the backup target with unhardlinked data, as $COMPDIR is an empty string.
 					echo "$(LOGSTAMP) Backing up: $i" >> $LOG;
 					/usr/bin/rsync -a --exclude-from "$SPATH/exclude.txt" $i/ $BACKUPDIR/$i/ >> $LOG 2>&1
 					CHECK="$?"
@@ -130,11 +133,16 @@ function BACKUP() {
 	if $(/bin/ls /var/cpanel/users/ > /dev/null 2>&1); then
 		echo "$(LOGSTAMP) cPanel users detected. Backing up homedirs." >> $LOG
 		for i in `/bin/ls /var/cpanel/users`; do
+			#Validate cPanel user homedirs against /etc/passwd. This isn't strictly necessary as symlinks should be there
+			#but would rather be thorough.
 			VALIDUSER=$(cut -f1 -d: /etc/passwd | /bin/grep -x $i)
 			USERDIR=$(grep $i /etc/passwd | cut -f6 -d:)
+			#Strict check to prevent partial username matching.
 			if [ "$i" == "$VALIDUSER" ]; then
+				#Valid user confirmed, look for the compdir for hardlinks (similar to above).
 				if [ ! -z $COMPDIR ]; then
 					if [ -d "$USERDIR" ]; then
+						#Hardlinked home dir backups here.
 						echo "$(LOGSTAMP) Backing up cPanel user: $i using hardlinks from $COMPDIR." >> $LOG;
 						mkdir -p $BACKUPDIR/home/$i
 						/usr/bin/rsync -a --delete --exclude-from="$SPATH/exclude.txt" --link-dest="$DIR/$COMPDIR/home" $USERDIR $BACKUPDIR/home >> $LOG 2>&1
@@ -151,11 +159,14 @@ function BACKUP() {
 								UNMOUNT
 								FAILED ;;
 						esac
+						#Shorthanded this. Don't modify the command string, as running it like this will be cPanel version agnostic.
+						#Other formats will cause syntax errors.
 						/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 					else
 						echo "$(LOGSTAMP) Home directory for user $i not found; skipping." >> $LOG
 					fi
 				else
+					#Homedir backups without hardlinks.
 					if [ ! -z $COMPDIR ]; then
 						echo "$(LOGSTAMP) Backing up cPanel user: $i." >> $LOG
 						mkdir -p $BACKUPDIR/home/$i
@@ -173,6 +184,8 @@ function BACKUP() {
 								UNMOUNT
 								FAILED ;;
 						esac
+						#Shorthanded this. Don't modify the command string, as running it like this will be cPanel version agnostic.
+						#Other formats will cause syntax errors.
 						/scripts/pkgacct --skiphomedir $i $BACKUPDIR/home/$i --skipacctdb > /dev/null 2>&1 || { echo "$(LOGSTAMP) Failed packaging cPanel user: $i." >> $LOG; UNMOUNT; FAILED; };
 					else
 						echo "$(LOGSTAMP) Home directory for user $i not found; skipping." >> $LOG
@@ -185,7 +198,9 @@ function BACKUP() {
 	else
 		echo "$(LOGSTAMP) No cPanel user accounts detected. Skipping homedir backup." >> $LOG
 	fi
-	#SQL dumps begin here.
+	#SQL dumps begin here. Might be better to break this into a separate function in the future, and figure out 
+	#a way to error check dumps a bit better. 
+	#This block will not cause the script to halt on error as there are numerous cases of invalid DB names, etc.
 	/bin/mkdir -p $BACKUPDIR/mysqldumps
 	echo "$(LOGSTAMP) Beginning MySQL dumps." >> $LOG
 	for i in $(mysql -e 'show databases;' | sed '/Database/d' | grep -v "information_schema" | grep -v "performance_schema"); do
@@ -197,14 +212,14 @@ function UNMOUNT(){
 	#Unmount the the backup drive.
 	#Called by FAILED to execute cleanup prior to exit.
 	#Will attempt to unmount the backup drive 3 times, then return as a failed backup.
-	#Same printf as for mounting to aid troubleshooting.
+	#Mount output will not have time stamps in order to support the older versions of BASH, sadly.
 	umount $DIR >> $LOG 2>&1
 	CHECKMOUNT=$(mount | grep "$DRIVE")
 	if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -lt 2 ]; then
 		echo "$(LOGSTAMP) $DRIVE failed to unmount properly, waiting 60 and trying again." >> $LOG
 		let UMOUNTS=$UMOUNTS+1
 		echo "$(LOGSTAMP) Unmount attempts: $UMOUNTS" >> $LOG
-		sleep 60
+		sleep 120
 		UNMOUNT
 	else
 		if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -eq 2 ]; then
@@ -218,7 +233,8 @@ function UNMOUNT(){
 }
 
 function SUMMARY(){
-	#While drive is still mounted, generate list of XML entries for the backup summary that Mr. Radar uses
+	#While drive is still mounted, generate list of XML entries for the backup summary that Sonar checks
+	#Hardcoded allowed variance as I'm not really sure how that plays in, but appears to be static across boxes.
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > $SUMMARY
 	echo " "  >> $SUMMARY
 	echo "<backupSummary>" >> $SUMMARY
@@ -232,10 +248,6 @@ function SUMMARY(){
 	echo "<percentFree>$(echo 100 - $(df -h /backup/ | tail -1 | awk '{ print $5 }'| sed 's/%//g') | bc)</percentFree>" >> $SUMMARY
 	for i in $(ls $DIR | grep _backup); do echo \<backup date=\"$(echo $i | cut -f3 -d_ | sed 's/-/\//g')\" time=\"$(echo $i | cut -f4 -d_)\" \/\> >> $SUMMARY;  done
 	echo '</backupSummary>' >> $SUMMARY
-	#Validate times for old style backups - this will set the hours to 00: always, rather than find the correct time.
-	#I'm aware this is incredibly dirty, but those backups will be rotating out anyways.
-	#sed -i 's/=\"[0-9]:/=\"00:/g' $SUMMARY
-	#sed -i 's/:[0-9]\"/:00\"/g' $SUMMARY
 	echo "$(LOGSTAMP) Created summary file at $SUMMARY." >> $LOG
 }
 
@@ -250,7 +262,7 @@ function FAILED(){
 }
 
 function NOTIFY(){
-	#Will send logout if $NOTIFY=1 - all else will result in no notifications.
+	#Will send log output if $NOTIFY=1 - all else will result in no notifications.
 	if [ "$NOTIFY" -eq "1" ]; then
 		echo "$(LOGSTAMP) General notifications enabled, sending report." >> $LOG
 		cat $LOG | mail -s "[lp-backup] Backup report for $HOSTNAME" "$EMAIL"
@@ -259,7 +271,8 @@ function NOTIFY(){
 	fi
 }
 
-
+#Call the functions to do the things.
+#Log writing occurs outside of the function to prevent unnecessary repitition 
 LOGINIT
 echo "$(LOGSTAMP) Beginning drive mount:" >> $LOG
 DRIVEMOUNT
