@@ -26,7 +26,7 @@ function LOGINIT() {
 	for i in $(find $LOGDIR -maxdepth 1 -type f -ctime +7 -iname backup-\*); do 
 		BASE=$(basename $i)
 		echo "$(LOGSTAMP) Removing old logfile: $BASE" >> $LOG; 
-		/bin/rm -f $i || ; 
+		/bin/rm -f $i || { echo "$(LOGSTAMP) Failed removing $DIR/DELDIR - possible read-only FS?" >> $LOG; UNMOUNT; FAILED; }
 	done
 }
 
