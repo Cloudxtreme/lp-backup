@@ -26,7 +26,7 @@ function LOGINIT() {
 	for i in $(find $LOGDIR -maxdepth 1 -type f -ctime +7 -iname backup-\*); do 
 		BASE=$(basename $i)
 		echo "$(LOGSTAMP) Removing old logfile: $BASE" >> $LOG; 
-		/bin/rm -f $i; 
+		/bin/rm -f $i || ; 
 	done
 }
 
@@ -62,7 +62,7 @@ function SPACECHECK(){
 			FAILED
 		else
 			echo "$(LOGSTAMP) Removing: $DIR/$DELDIR" >> $LOG
-			/bin/rm -r $DIR/$DELDIR
+			/bin/rm -rf $DIR/$DELDIR >> $LOG || { echo "$(LOGSTAMP) Failed removing $DIR/DELDIR - possible read-only FS?" >> $LOG; UNMOUNT; FAILED; }
 			let DELTRIES=$DELTRIES+1
 			SPACECHECK
 		fi
@@ -84,6 +84,7 @@ function BACKUP() {
 	COMPDIR=$(/bin/ls -1c $DIR | grep _backup | head -1)
 	BACKUPDIR="$DIR/_backup_$TS"
 	/bin/mkdir -p $BACKUPDIR/home
+	/bin/chmod 700 $BACKUPDIR
 	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG.
 	#Begin looping the target array
 	for i in "${TARGET[@]}"; do
@@ -215,14 +216,14 @@ function UNMOUNT(){
 	#Mount output will not have time stamps in order to support the older versions of BASH, sadly.
 	umount $DIR >> $LOG 2>&1
 	CHECKMOUNT=$(mount | grep "$DRIVE")
-	if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -lt 2 ]; then
-		echo "$(LOGSTAMP) $DRIVE failed to unmount properly, waiting 60 and trying again." >> $LOG
+	if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -lt 9 ]; then
+		echo "$(LOGSTAMP) $DRIVE failed to unmount properly, waiting two minutes and trying again." >> $LOG
 		let UMOUNTS=$UMOUNTS+1
 		echo "$(LOGSTAMP) Unmount attempts: $UMOUNTS" >> $LOG
 		sleep 120
 		UNMOUNT
 	else
-		if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -eq 2 ]; then
+		if [ ! -z "$CHECKMOUNT" ] && [ "$UMOUNTS" -eq 9 ]; then
 			echo "$(LOGSTAMP) $DRIVE failed to unmount after three attempts; exiting." >> $LOG
 			FAILED
 		fi
