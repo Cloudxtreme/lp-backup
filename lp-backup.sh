@@ -26,7 +26,7 @@ function LOGINIT() {
 	for i in $(find $LOGDIR -maxdepth 1 -type f -ctime +7 -iname backup-\*); do 
 		BASE=$(basename $i)
 		echo "$(LOGSTAMP) Removing old logfile: $BASE" >> $LOG; 
-		/bin/rm -f $i || { echo "$(LOGSTAMP) Failed removing $DIR/DELDIR - possible read-only FS?" >> $LOG; UNMOUNT; FAILED; }
+		/bin/rm -f $i >> $LOG 2>&1 || { echo "$(LOGSTAMP) Failed removing $i - possible read-only FS?" >> $LOG; UNMOUNT; FAILED; }
 	done
 }
 
@@ -62,7 +62,7 @@ function SPACECHECK(){
 			FAILED
 		else
 			echo "$(LOGSTAMP) Removing: $DIR/$DELDIR" >> $LOG
-			/bin/rm -rf $DIR/$DELDIR >> $LOG || { echo "$(LOGSTAMP) Failed removing $DIR/DELDIR - possible read-only FS?" >> $LOG; UNMOUNT; FAILED; }
+			/bin/rm -rf $DIR/$DELDIR >> $LOG 2>&1 || { echo "$(LOGSTAMP) Failed removing $DIR/$DELDIR - possible read-only FS?" >> $LOG; UNMOUNT; FAILED; }
 			let DELTRIES=$DELTRIES+1
 			SPACECHECK
 		fi
