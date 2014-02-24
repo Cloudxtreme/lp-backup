@@ -85,7 +85,7 @@ function BACKUP() {
 	BACKUPDIR="$DIR/_backup_$TS"
 	/bin/mkdir -p $BACKUPDIR/home
 	/bin/chmod 700 $BACKUPDIR
-	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG.
+	echo "$(LOGSTAMP) Backing up to $BACKUPDIR." >> $LOG
 	#Begin looping the target array
 	for i in "${TARGET[@]}"; do
 		#Symlink check - don't need to recurse through these.
